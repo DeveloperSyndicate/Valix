@@ -33,5 +33,7 @@ include(":valix-ktor")
 include(":valix-micronaut")
 include(":valix-gradle-plugin")
 include(":valix-benchmarks")
-include(":sample-jvm")
-include(":sample-android")
+if (System.getenv("EXCLUDE_SAMPLES") != "true") {
+    include(":sample-jvm")
+    include(":sample-android")
+}
