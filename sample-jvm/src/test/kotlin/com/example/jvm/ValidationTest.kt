@@ -452,4 +452,118 @@ class ValidationTest {
         assertEquals("FUTURE_REQUIRED", invalidResult.errors.find { it.field == "futureInstant" }?.code)
         assertEquals("FUTURE_REQUIRED", invalidResult.errors.find { it.field == "futureOrPresentOffset" }?.code)
     }
+
+    @Test
+    fun testCustomValidatorAndValidationContext() {
+        val validAccount = Account(
+            username = "valid_user_123",
+            password = "StrongPassword1"
+        )
+        val result = AccountValidator.validate(validAccount)
+        assertTrue(result.valid)
+
+        val invalidAccount = Account(
+            username = "INVALID-USERNAME",
+            password = "StrongPassword1"
+        )
+        val resultInvalid = AccountValidator.validate(invalidAccount)
+        assertFalse(resultInvalid.valid)
+        assertEquals(1, resultInvalid.errors.size)
+        val error = resultInvalid.errors[0]
+        assertEquals("username", error.field)
+        assertEquals("CUSTOM_VALIDATION_FAILED", error.code)
+        assertEquals("invalid username", error.message)
+        assertEquals("INVALID-USERNAME", error.rejectedValue)
+        assertEquals("com.example.jvm.Username", error.constraint)
+        assertEquals("username", error.path)
+    }
+
+    @Test
+    fun testMetaAnnotationComposition() {
+        // Test too short password (length 7)
+        val accountTooShort = Account(
+            username = "user",
+            password = "Short1"
+        )
+        val result1 = AccountValidator.validate(accountTooShort)
+        assertFalse(result1.valid)
+        val error1 = result1.errors.find { it.code == "MIN_LENGTH" }
+        assertEquals("password", error1?.field)
+        assertEquals("must be a strong password", error1?.message)
+
+        // Test missing number/uppercase character pattern
+        val accountNoPattern = Account(
+            username = "user",
+            password = "alllowercase"
+        )
+        val result2 = AccountValidator.validate(accountNoPattern)
+        assertFalse(result2.valid)
+        val error2 = result2.errors.find { it.code == "PATTERN_MISMATCH" }
+        assertEquals("password", error2?.field)
+        assertEquals("must be a strong password", error2?.message)
+
+        // Test blank password
+        val accountBlank = Account(
+            username = "user",
+            password = "        "
+        )
+        val result3 = AccountValidator.validate(accountBlank)
+        assertFalse(result3.valid)
+        // Should trigger NOT_BLANK and PATTERN_MISMATCH (since spaces don't match pattern)
+        assertTrue(result3.errors.any { it.code == "NOT_BLANK" })
+    }
+
+    @Test
+    fun testObjectConstraintValidator() {
+        val now = java.time.LocalDate.now()
+        val validEvent = Event(
+            startDate = now,
+            endDate = now.plusDays(5)
+        )
+        val result1 = EventValidator.validate(validEvent)
+        assertTrue(result1.valid)
+
+        val invalidEvent = Event(
+            startDate = now.plusDays(5),
+            endDate = now
+        )
+        val result2 = EventValidator.validate(invalidEvent)
+        assertFalse(result2.valid)
+        assertEquals(1, result2.errors.size)
+        val error = result2.errors[0]
+        assertEquals("", error.field)
+        assertEquals("CUSTOM_VALIDATION_FAILED", error.code)
+        assertEquals("invalid date range", error.message)
+        assertEquals(invalidEvent, error.rejectedValue)
+        assertEquals("com.example.jvm.ValidDateRange", error.constraint)
+        assertEquals("", error.path)
+    }
+
+    @Test
+    fun testFieldsMatchValidation() {
+        val validForm = RegisterForm(
+            email = "test@valix.io",
+            password = "superSecurePassword",
+            confirmPassword = "superSecurePassword"
+        )
+        val result1 = RegisterFormValidator.validate(validForm)
+        assertTrue(result1.valid)
+
+        val invalidForm = RegisterForm(
+            email = "test@valix.io",
+            password = "superSecurePassword",
+            confirmPassword = "differentPassword"
+        )
+        val result2 = RegisterFormValidator.validate(invalidForm)
+        assertFalse(result2.valid)
+        assertEquals(1, result2.errors.size)
+        val error = result2.errors[0]
+        assertEquals("confirmPassword", error.field)
+        assertEquals("FIELDS_MATCH_INVALID", error.code)
+        assertEquals("Passwords must match", error.message)
+        assertEquals("differentPassword", error.rejectedValue)
+        assertEquals("io.valix.annotations.FieldsMatch", error.constraint)
+        assertEquals("confirmPassword", error.path)
+    }
 }
+

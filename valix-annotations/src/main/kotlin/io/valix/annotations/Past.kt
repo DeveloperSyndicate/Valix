@@ -3,7 +3,7 @@ package io.valix.annotations
 import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.SOURCE)
-@Target(AnnotationTarget.PROPERTY)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.ANNOTATION_CLASS)
 annotation class Past(
     val message: String = "",
     val groups: Array<KClass<*>> = []

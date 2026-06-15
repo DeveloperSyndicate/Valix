@@ -1,12 +1,12 @@
-package io.valix.ksp.rules
+package io.valix.ksp
 
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSAnnotation
-import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.PropertySpec
 
-interface ConstraintRule {
+interface ConstraintGenerator {
     val annotationFqName: String
     val errorCode: String
     val defaultMessage: String
@@ -14,11 +14,21 @@ interface ConstraintRule {
     fun getDefaultMessage(annotation: KSAnnotation): String = defaultMessage
 
     /**
+     * Customizes the field name reported in the ValidationError.
+     */
+    fun getErrorField(target: KSDeclaration, annotation: KSAnnotation, defaultField: String): String = defaultField
+
+    /**
+     * Customizes the expression used to capture the rejected value in the ValidationError.
+     */
+    fun getRejectedValueExpression(target: KSDeclaration, annotation: KSAnnotation, defaultExpression: String): String = defaultExpression
+
+    /**
      * Performs compile-time check of target type and annotation arguments.
      * Logs error via logger.error if validation fails, returning false.
      */
     fun validate(
-        property: KSPropertyDeclaration,
+        target: KSDeclaration,
         annotation: KSAnnotation,
         logger: KSPLogger
     ): Boolean
@@ -27,7 +37,7 @@ interface ConstraintRule {
      * Generates the boolean condition that triggers a validation failure (evaluates to true on failure).
      */
     fun generateCondition(
-        property: KSPropertyDeclaration,
+        target: KSDeclaration,
         annotation: KSAnnotation,
         valName: String
     ): CodeBlock
@@ -36,7 +46,7 @@ interface ConstraintRule {
      * Generates any companion/validator object auxiliary fields (e.g. Regex patterns, allowed values sets).
      */
     fun generateAuxiliaryProperties(
-        property: KSPropertyDeclaration,
+        target: KSDeclaration,
         annotation: KSAnnotation,
         propName: String
     ): List<PropertySpec> = emptyList()

@@ -2,8 +2,10 @@ package io.valix.ksp.rules
 
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSAnnotation
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.CodeBlock
+import io.valix.ksp.ConstraintGenerator
 
 private fun isNumericType(property: KSPropertyDeclaration): Boolean {
     val resolved = property.type.resolve()
@@ -18,14 +20,15 @@ private fun isNumericType(property: KSPropertyDeclaration): Boolean {
 }
 
 private fun validateNumericProperty(
-    property: KSPropertyDeclaration,
+    target: KSDeclaration,
     annotation: KSAnnotation,
     logger: KSPLogger
 ): Boolean {
-    if (!isNumericType(property)) {
+    val property = target as? KSPropertyDeclaration
+    if (property == null || !isNumericType(property)) {
         logger.error(
             "@${annotation.shortName.asString()} can only be applied to Int, Long, Float, Double, or Short properties",
-            property
+            target
         )
         return false
     }
@@ -48,7 +51,7 @@ private fun getZeroString(property: KSPropertyDeclaration): String {
     return if (qName == "kotlin.Double" || qName == "kotlin.Float") "0.0" else "0"
 }
 
-object MinRule : ConstraintRule {
+object MinRule : ConstraintGenerator {
     override val annotationFqName = "io.valix.annotations.Min"
     override val errorCode = "MIN_VALUE"
     override val defaultMessage = "must be at least min value"
@@ -58,18 +61,19 @@ object MinRule : ConstraintRule {
         return "must be at least $limit"
     }
 
-    override fun validate(property: KSPropertyDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        if (!validateNumericProperty(property, annotation, logger)) return false
+    override fun validate(target: KSDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
+        if (!validateNumericProperty(target, annotation, logger)) return false
         val value = annotation.arguments.firstOrNull { it.name?.asString() == "value" }?.value as? Long
         if (value == null) {
-            logger.error("@Min must specify a value parameter", property)
+            logger.error("@Min must specify a value parameter", target)
             return false
         }
         return true
     }
 
-    override fun generateCondition(property: KSPropertyDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+    override fun generateCondition(target: KSDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
         val limit = annotation.arguments.first { it.name?.asString() == "value" }.value as Long
+        val property = target as KSPropertyDeclaration
         val resolved = property.type.resolve()
         val qName = resolved.declaration.qualifiedName?.asString()
         return if (qName == "kotlin.Int") {
@@ -83,7 +87,7 @@ object MinRule : ConstraintRule {
     }
 }
 
-object MaxRule : ConstraintRule {
+object MaxRule : ConstraintGenerator {
     override val annotationFqName = "io.valix.annotations.Max"
     override val errorCode = "MAX_VALUE"
     override val defaultMessage = "must be at most max value"
@@ -93,18 +97,19 @@ object MaxRule : ConstraintRule {
         return "must be at most $limit"
     }
 
-    override fun validate(property: KSPropertyDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        if (!validateNumericProperty(property, annotation, logger)) return false
+    override fun validate(target: KSDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
+        if (!validateNumericProperty(target, annotation, logger)) return false
         val value = annotation.arguments.firstOrNull { it.name?.asString() == "value" }?.value as? Long
         if (value == null) {
-            logger.error("@Max must specify a value parameter", property)
+            logger.error("@Max must specify a value parameter", target)
             return false
         }
         return true
     }
 
-    override fun generateCondition(property: KSPropertyDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+    override fun generateCondition(target: KSDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
         val limit = annotation.arguments.first { it.name?.asString() == "value" }.value as Long
+        val property = target as KSPropertyDeclaration
         val resolved = property.type.resolve()
         val qName = resolved.declaration.qualifiedName?.asString()
         return if (qName == "kotlin.Int") {
@@ -118,67 +123,71 @@ object MaxRule : ConstraintRule {
     }
 }
 
-object PositiveRule : ConstraintRule {
+object PositiveRule : ConstraintGenerator {
     override val annotationFqName = "io.valix.annotations.Positive"
     override val errorCode = "POSITIVE_REQUIRED"
     override val defaultMessage = "must be positive"
 
-    override fun validate(property: KSPropertyDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        return validateNumericProperty(property, annotation, logger)
+    override fun validate(target: KSDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
+        return validateNumericProperty(target, annotation, logger)
     }
 
-    override fun generateCondition(property: KSPropertyDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+    override fun generateCondition(target: KSDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+        val property = target as KSPropertyDeclaration
         val zero = getZeroString(property)
         return CodeBlock.of("%L <= %L", valName, zero)
     }
 }
 
-object PositiveOrZeroRule : ConstraintRule {
+object PositiveOrZeroRule : ConstraintGenerator {
     override val annotationFqName = "io.valix.annotations.PositiveOrZero"
     override val errorCode = "POSITIVE_REQUIRED"
     override val defaultMessage = "must be positive or zero"
 
-    override fun validate(property: KSPropertyDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        return validateNumericProperty(property, annotation, logger)
+    override fun validate(target: KSDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
+        return validateNumericProperty(target, annotation, logger)
     }
 
-    override fun generateCondition(property: KSPropertyDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+    override fun generateCondition(target: KSDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+        val property = target as KSPropertyDeclaration
         val zero = getZeroString(property)
         return CodeBlock.of("%L < %L", valName, zero)
     }
 }
 
-object NegativeRule : ConstraintRule {
+object NegativeRule : ConstraintGenerator {
     override val annotationFqName = "io.valix.annotations.Negative"
     override val errorCode = "NEGATIVE_REQUIRED"
     override val defaultMessage = "must be negative"
 
-    override fun validate(property: KSPropertyDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        return validateNumericProperty(property, annotation, logger)
+    override fun validate(target: KSDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
+        return validateNumericProperty(target, annotation, logger)
     }
 
-    override fun generateCondition(property: KSPropertyDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+    override fun generateCondition(target: KSDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+        val property = target as KSPropertyDeclaration
         val zero = getZeroString(property)
         return CodeBlock.of("%L >= %L", valName, zero)
     }
 }
 
-object NegativeOrZeroRule : ConstraintRule {
+object NegativeOrZeroRule : ConstraintGenerator {
     override val annotationFqName = "io.valix.annotations.NegativeOrZero"
     override val errorCode = "NEGATIVE_REQUIRED"
     override val defaultMessage = "must be negative or zero"
 
-    override fun validate(property: KSPropertyDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        return validateNumericProperty(property, annotation, logger)
+    override fun validate(target: KSDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
+        return validateNumericProperty(target, annotation, logger)
     }
 
-    override fun generateCondition(property: KSPropertyDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+    override fun generateCondition(target: KSDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+        val property = target as KSPropertyDeclaration
         val zero = getZeroString(property)
         return CodeBlock.of("%L > %L", valName, zero)
     }
 }
 
-object RangeRule : ConstraintRule {
+object RangeRule : ConstraintGenerator {
     override val annotationFqName = "io.valix.annotations.Range"
     override val errorCode = "RANGE_INVALID"
     override val defaultMessage = "must be in range"
@@ -189,24 +198,25 @@ object RangeRule : ConstraintRule {
         return "must be between $min and $max"
     }
 
-    override fun validate(property: KSPropertyDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
-        if (!validateNumericProperty(property, annotation, logger)) return false
+    override fun validate(target: KSDeclaration, annotation: KSAnnotation, logger: KSPLogger): Boolean {
+        if (!validateNumericProperty(target, annotation, logger)) return false
         val min = annotation.arguments.firstOrNull { it.name?.asString() == "min" }?.value as? Long
         val max = annotation.arguments.firstOrNull { it.name?.asString() == "max" }?.value as? Long
         if (min == null || max == null) {
-            logger.error("@Range must specify min and max parameters", property)
+            logger.error("@Range must specify min and max parameters", target)
             return false
         }
         if (min > max) {
-            logger.error("@Range min value cannot be greater than max value", property)
+            logger.error("@Range min value cannot be greater than max value", target)
             return false
         }
         return true
     }
 
-    override fun generateCondition(property: KSPropertyDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
+    override fun generateCondition(target: KSDeclaration, annotation: KSAnnotation, valName: String): CodeBlock {
         val min = annotation.arguments.first { it.name?.asString() == "min" }.value as Long
         val max = annotation.arguments.first { it.name?.asString() == "max" }.value as Long
+        val property = target as KSPropertyDeclaration
         val resolved = property.type.resolve()
         val qName = resolved.declaration.qualifiedName?.asString()
         return if (qName == "kotlin.Int") {

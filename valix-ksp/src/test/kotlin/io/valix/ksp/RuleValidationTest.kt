@@ -139,4 +139,113 @@ class RuleValidationTest {
         assertFalse(AllowedValuesRule.validate(prop, ann, logger))
         verify(logger).error(eq("@AllowedValues can only be applied to Enum or String/String? properties"), eq(prop))
     }
+
+    @Test
+    fun testFieldsMatchOnNonClassDeclarationFails() {
+        val target = mockProperty("kotlin.String")
+        val ann = mockAnnotation("io.valix.annotations.FieldsMatch", mapOf("first" to "password", "second" to "confirmPassword"))
+        assertFalse(io.valix.ksp.rules.FieldsMatchGenerator.validate(target, ann, logger))
+        verify(logger).error(eq("@FieldsMatch can only be applied to class declarations"), eq(target))
+    }
+
+    @Test
+    fun testFieldsMatchWithMissingFieldsFails() {
+        val classDecl: KSClassDeclaration = mock()
+        val className = mockName("MyRequest")
+        org.mockito.kotlin.whenever(classDecl.simpleName).doReturn(className)
+        org.mockito.kotlin.whenever(classDecl.getAllProperties()).doReturn(emptySequence())
+
+        val ann = mockAnnotation("io.valix.annotations.FieldsMatch", mapOf("first" to "password", "second" to "confirmPassword"))
+        assertFalse(io.valix.ksp.rules.FieldsMatchGenerator.validate(classDecl, ann, logger))
+        verify(logger).error(eq("Field 'password' not found in class MyRequest"), eq(classDecl))
+    }
+
+    @Test
+    fun testFieldsMatchWithIncompatibleTypesFails() {
+        val classDecl: KSClassDeclaration = mock()
+        val className = mockName("MyRequest")
+        org.mockito.kotlin.whenever(classDecl.simpleName).doReturn(className)
+
+        // Create first property and mock its type/resolve
+        val firstPropName = mockName("password")
+        val firstType: KSType = mock()
+        val firstTypeDecl: KSClassDeclaration = mock()
+        val stringName = mockName("kotlin.String")
+        org.mockito.kotlin.whenever(firstTypeDecl.qualifiedName).doReturn(stringName)
+        org.mockito.kotlin.whenever(firstType.declaration).doReturn(firstTypeDecl)
+        val firstTypeRef: com.google.devtools.ksp.symbol.KSTypeReference = mock()
+        org.mockito.kotlin.whenever(firstTypeRef.resolve()).doReturn(firstType)
+        val firstProp: KSPropertyDeclaration = mock()
+        org.mockito.kotlin.whenever(firstProp.simpleName).doReturn(firstPropName)
+        org.mockito.kotlin.whenever(firstProp.type).doReturn(firstTypeRef)
+
+        // Create second property and mock its type/resolve
+        val secondPropName = mockName("confirmPassword")
+        val secondType: KSType = mock()
+        val secondTypeDecl: KSClassDeclaration = mock()
+        val intName = mockName("kotlin.Int")
+        org.mockito.kotlin.whenever(secondTypeDecl.qualifiedName).doReturn(intName)
+        org.mockito.kotlin.whenever(secondType.declaration).doReturn(secondTypeDecl)
+        val secondTypeRef: com.google.devtools.ksp.symbol.KSTypeReference = mock()
+        org.mockito.kotlin.whenever(secondTypeRef.resolve()).doReturn(secondType)
+        val secondProp: KSPropertyDeclaration = mock()
+        org.mockito.kotlin.whenever(secondProp.simpleName).doReturn(secondPropName)
+        org.mockito.kotlin.whenever(secondProp.type).doReturn(secondTypeRef)
+
+        // Mock makeNotNullable and assignable to return false for incompatible check
+        org.mockito.kotlin.whenever(firstType.makeNotNullable()).doReturn(firstType)
+        org.mockito.kotlin.whenever(secondType.makeNotNullable()).doReturn(secondType)
+        org.mockito.kotlin.whenever(firstType.isAssignableFrom(secondType)).doReturn(false)
+        org.mockito.kotlin.whenever(secondType.isAssignableFrom(firstType)).doReturn(false)
+
+        org.mockito.kotlin.whenever(classDecl.getAllProperties()).doReturn(sequenceOf(firstProp, secondProp))
+
+        val ann = mockAnnotation("io.valix.annotations.FieldsMatch", mapOf("first" to "password", "second" to "confirmPassword"))
+        assertFalse(io.valix.ksp.rules.FieldsMatchGenerator.validate(classDecl, ann, logger))
+        verify(logger).error(eq("Fields 'password' and 'confirmPassword' have incompatible types"), eq(classDecl))
+    }
+
+    @Test
+    fun testFieldsMatchWithCompatibleTypesPasses() {
+        val classDecl: KSClassDeclaration = mock()
+        val className = mockName("MyRequest")
+        org.mockito.kotlin.whenever(classDecl.simpleName).doReturn(className)
+
+        // Create first property
+        val firstPropName = mockName("password")
+        val firstType: KSType = mock()
+        val firstTypeDecl: KSClassDeclaration = mock()
+        val stringName = mockName("kotlin.String")
+        org.mockito.kotlin.whenever(firstTypeDecl.qualifiedName).doReturn(stringName)
+        org.mockito.kotlin.whenever(firstType.declaration).doReturn(firstTypeDecl)
+        val firstTypeRef: com.google.devtools.ksp.symbol.KSTypeReference = mock()
+        org.mockito.kotlin.whenever(firstTypeRef.resolve()).doReturn(firstType)
+        val firstProp: KSPropertyDeclaration = mock()
+        org.mockito.kotlin.whenever(firstProp.simpleName).doReturn(firstPropName)
+        org.mockito.kotlin.whenever(firstProp.type).doReturn(firstTypeRef)
+
+        // Create second property
+        val secondPropName = mockName("confirmPassword")
+        val secondType: KSType = mock()
+        val secondTypeDecl: KSClassDeclaration = mock()
+        val stringName2 = mockName("kotlin.String")
+        org.mockito.kotlin.whenever(secondTypeDecl.qualifiedName).doReturn(stringName2)
+        org.mockito.kotlin.whenever(secondType.declaration).doReturn(secondTypeDecl)
+        val secondTypeRef: com.google.devtools.ksp.symbol.KSTypeReference = mock()
+        org.mockito.kotlin.whenever(secondTypeRef.resolve()).doReturn(secondType)
+        val secondProp: KSPropertyDeclaration = mock()
+        org.mockito.kotlin.whenever(secondProp.simpleName).doReturn(secondPropName)
+        org.mockito.kotlin.whenever(secondProp.type).doReturn(secondTypeRef)
+
+        // Mock makeNotNullable and assignable
+        org.mockito.kotlin.whenever(firstType.makeNotNullable()).doReturn(firstType)
+        org.mockito.kotlin.whenever(secondType.makeNotNullable()).doReturn(secondType)
+        org.mockito.kotlin.whenever(firstType.isAssignableFrom(secondType)).doReturn(true)
+
+        org.mockito.kotlin.whenever(classDecl.getAllProperties()).doReturn(sequenceOf(firstProp, secondProp))
+
+        val ann = mockAnnotation("io.valix.annotations.FieldsMatch", mapOf("first" to "password", "second" to "confirmPassword"))
+        assertTrue(io.valix.ksp.rules.FieldsMatchGenerator.validate(classDecl, ann, logger))
+    }
 }
+

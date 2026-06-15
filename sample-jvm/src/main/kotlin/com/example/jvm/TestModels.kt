@@ -1,6 +1,7 @@
 package com.example.jvm
 
 import io.valix.annotations.*
+import io.valix.core.*
 
 // Validation Groups
 interface Create
@@ -87,4 +88,75 @@ data class Phase3TestModel(
     @Future val futureInstant: java.time.Instant?,
     @FutureOrPresent val futureOrPresentOffset: java.time.OffsetDateTime?
 )
+
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validator = UsernameValidator::class)
+annotation class Username(
+    val message: String = "invalid username",
+    val groups: Array<kotlin.reflect.KClass<*>> = []
+)
+
+class UsernameValidator : ConstraintValidator<String> {
+    override fun validate(value: String, context: ValidationContext): Boolean {
+        // Assert context properties are populated correctly
+        if (context.fieldName != "username") return false
+        if (context.path != "username") return false
+        if (context.rootObject !is Account) return false
+        return value.matches(Regex("^[a-z0-9_]+$"))
+    }
+}
+
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+@NotBlank
+@MinLength(8)
+@Pattern("^(?=.*[A-Z])(?=.*[0-9]).*$")
+annotation class StrongPassword(
+    val message: String = "must be a strong password",
+    val groups: Array<kotlin.reflect.KClass<*>> = []
+)
+
+data class Account(
+    @Username
+    val username: String,
+
+    @StrongPassword
+    val password: String
+)
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validator = DateRangeValidator::class)
+annotation class ValidDateRange(
+    val message: String = "invalid date range",
+    val groups: Array<kotlin.reflect.KClass<*>> = []
+)
+
+class DateRangeValidator : ObjectConstraintValidator<Event> {
+    override fun validate(value: Event, context: ValidationContext): Boolean {
+        if (context.fieldName != "") return false
+        if (context.path != "") return false
+        if (context.rootObject !== value) return false
+        return !value.startDate.isAfter(value.endDate)
+    }
+}
+
+@ValidDateRange
+data class Event(
+    val startDate: java.time.LocalDate,
+    val endDate: java.time.LocalDate
+)
+
+@FieldsMatch(
+    first = "password",
+    second = "confirmPassword",
+    message = "Passwords must match"
+)
+data class RegisterForm(
+    val email: String,
+    val password: String,
+    val confirmPassword: String
+)
+
 

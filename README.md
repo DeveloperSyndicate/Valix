@@ -218,4 +218,84 @@ fun validatePayload(payload: Any) {
 
 - **Naming evolution**: `Valix` now generates `<ClassName>Validator` as the primary validator class.
 - **Backward compatibility**: The older suffix `<ClassName>ValixValidator` continues to be generated and works as an alias delegating directly to `<ClassName>Validator`.
-- **`ValidationError` upgrade**: `ValidationError` now contains `rejectedValue: Any?` to retrieve the invalid value causing the constraint check to fail. Legacy constructions continue to work seamlessly.
+- **`ValidationError` upgrade**: `ValidationError` now contains `rejectedValue: Any?` to retrieve the invalid value, `constraint: String?` representing the FQN of the failed annotation, and `path: String` representing the nested property path. Legacy constructions continue to work seamlessly.
+
+---
+
+## 🛠️ Advanced Platform Features (Phase 4)
+
+Valix Phase 4 introduces robust customization capabilities transforming it into a full validation platform.
+
+### 1. Custom Property Validators
+Create your own custom property annotations by applying the `@Constraint` meta-annotation pointing to a class implementing `ConstraintValidator<T>`:
+
+```kotlin
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.ANNOTATION_CLASS)
+@Constraint(validator = UsernameValidator::class)
+annotation class Username(
+    val message: String = "invalid username",
+    val groups: Array<KClass<*>> = []
+)
+
+class UsernameValidator : ConstraintValidator<String> {
+    override fun validate(value: String, context: ValidationContext): Boolean {
+        return value.matches(Regex("^[a-z0-9_]+$"))
+    }
+}
+```
+
+### 2. Validation Context
+Custom validators receive a `ValidationContext` containing runtime information:
+- `context.fieldName`: The simple name of the validated property.
+- `context.path`: The fully qualified nested property path (e.g. `user.profile.website`).
+- `context.rootObject`: The top-level class object being validated.
+- `context.groups`: The active validation groups list.
+
+### 3. Composed Meta-Annotations
+Build reusable validation bundles (constraint composition) from existing annotations. The generator recursively expands composed meta-annotations and propagates message and groups:
+
+```kotlin
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.ANNOTATION_CLASS)
+@NotBlank
+@MinLength(8)
+@Pattern("^(?=.*[A-Z])(?=.*[0-9]).*$")
+annotation class StrongPassword(
+    val message: String = "must be a strong password",
+    val groups: Array<KClass<*>> = []
+)
+```
+
+### 4. Object-Level & Cross-Field Validation
+Perform validations on class declarations using `ObjectConstraintValidator<T>`:
+
+```kotlin
+@Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
+@Constraint(validator = DateRangeValidator::class)
+annotation class ValidDateRange(
+    val message: String = "invalid date range",
+    val groups: Array<KClass<*>> = []
+)
+
+class DateRangeValidator : ObjectConstraintValidator<Event> {
+    override fun validate(value: Event, context: ValidationContext): Boolean {
+        return !value.startDate.isAfter(value.endDate)
+    }
+}
+```
+
+### 5. Cross-Field Equality (`@FieldsMatch`)
+Use the built-in `@FieldsMatch` class-level annotation to assert that two properties match:
+
+```kotlin
+@FieldsMatch(
+    first = "password",
+    second = "confirmPassword",
+    message = "Passwords must match"
+)
+data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val confirmPassword: String
+)
+```
+

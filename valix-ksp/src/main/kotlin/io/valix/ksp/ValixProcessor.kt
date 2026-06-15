@@ -7,6 +7,7 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.squareup.kotlinpoet.ANY
@@ -24,7 +25,6 @@ import com.squareup.kotlinpoet.WildcardTypeName
 import com.squareup.kotlinpoet.joinToCode
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
-import io.valix.ksp.rules.*
 
 class ValixProcessor(
     private val codeGenerator: CodeGenerator,
@@ -33,70 +33,44 @@ class ValixProcessor(
 
     private var processed = false
 
-    private val ruleRegistry = listOf(
-        NotBlankRule, EmailRule, MinLengthRule, MaxLengthRule, PatternRule,
-        UrlRule, PhoneNumberRule, AlphaRule, AlphaNumericRule, LowerCaseRule, UpperCaseRule, ContainsRule, StartsWithRule, EndsWithRule,
-        MinRule, MaxRule, PositiveRule, PositiveOrZeroRule, NegativeRule, NegativeOrZeroRule, RangeRule,
-        NotEmptyRule, SizeRule, AllowedValuesRule, PastRule, PastOrPresentRule, FutureRule, FutureOrPresentRule
-    ).associateBy { it.annotationFqName }
-
     override fun process(resolver: Resolver): List<KSAnnotated> {
         if (processed) return emptyList()
         processed = true
 
-        val annotations = listOf(
-            "io.valix.annotations.NotNull",
-            "io.valix.annotations.NotBlank",
-            "io.valix.annotations.Email",
-            "io.valix.annotations.MinLength",
-            "io.valix.annotations.MaxLength",
-            "io.valix.annotations.Pattern",
-            "io.valix.annotations.Valid",
-            "io.valix.annotations.Url",
-            "io.valix.annotations.PhoneNumber",
-            "io.valix.annotations.Alpha",
-            "io.valix.annotations.AlphaNumeric",
-            "io.valix.annotations.LowerCase",
-            "io.valix.annotations.UpperCase",
-            "io.valix.annotations.Contains",
-            "io.valix.annotations.StartsWith",
-            "io.valix.annotations.EndsWith",
-            "io.valix.annotations.Min",
-            "io.valix.annotations.Max",
-            "io.valix.annotations.Positive",
-            "io.valix.annotations.PositiveOrZero",
-            "io.valix.annotations.Negative",
-            "io.valix.annotations.NegativeOrZero",
-            "io.valix.annotations.Range",
-            "io.valix.annotations.NotEmpty",
-            "io.valix.annotations.Size",
-            "io.valix.annotations.AllowedValues",
-            "io.valix.annotations.Past",
-            "io.valix.annotations.PastOrPresent",
-            "io.valix.annotations.Future",
-            "io.valix.annotations.FutureOrPresent"
-        )
-
-        val classesToValidate = mutableMapOf<KSClassDeclaration, MutableList<KSPropertyDeclaration>>()
-
-        for (annotationName in annotations) {
-            val symbols = resolver.getSymbolsWithAnnotation(annotationName)
-            for (symbol in symbols) {
-                if (symbol is KSPropertyDeclaration) {
-                    val classDecl = symbol.parentDeclaration as? KSClassDeclaration
-                    if (classDecl != null) {
-                        classesToValidate.getOrPut(classDecl) { mutableListOf() }.add(symbol)
-                    }
-                }
+        val allClassDecls = mutableListOf<KSClassDeclaration>()
+        for (file in resolver.getNewFiles()) {
+            for (decl in file.declarations) {
+                findClassDeclarations(decl, allClassDecls)
             }
         }
 
         val generatedClasses = mutableListOf<KSClassDeclaration>()
 
-        for ((classDecl, properties) in classesToValidate) {
-            val uniqueProperties = properties.distinctBy { it.simpleName.asString() }
-            generateValidator(resolver, classDecl, uniqueProperties)
-            generatedClasses.add(classDecl)
+        for (classDecl in allClassDecls) {
+            if (classDecl.classKind == com.google.devtools.ksp.symbol.ClassKind.ANNOTATION_CLASS ||
+                classDecl.classKind == com.google.devtools.ksp.symbol.ClassKind.INTERFACE) {
+                continue
+            }
+            val classDescriptors = ConstraintResolver.resolveClassConstraints(classDecl, resolver, logger)
+            val propertyDescriptors = mutableMapOf<KSPropertyDeclaration, List<ConstraintDescriptor>>()
+
+            for (property in classDecl.getAllProperties()) {
+                val descriptors = ConstraintResolver.resolvePropertyConstraints(property, resolver, logger)
+                val hasNotNull = property.annotations.any {
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.NotNull"
+                }
+                val hasValid = property.annotations.any {
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Valid"
+                }
+                if (descriptors.isNotEmpty() || hasNotNull || hasValid) {
+                    propertyDescriptors[property] = descriptors
+                }
+            }
+
+            if (classDescriptors.isNotEmpty() || propertyDescriptors.isNotEmpty()) {
+                generateValidator(resolver, classDecl, classDescriptors, propertyDescriptors)
+                generatedClasses.add(classDecl)
+            }
         }
 
         if (generatedClasses.isNotEmpty()) {
@@ -104,6 +78,15 @@ class ValixProcessor(
         }
 
         return emptyList()
+    }
+
+    private fun findClassDeclarations(decl: KSDeclaration, result: MutableList<KSClassDeclaration>) {
+        if (decl is KSClassDeclaration) {
+            result.add(decl)
+            for (subDecl in decl.declarations) {
+                findClassDeclarations(subDecl, result)
+            }
+        }
     }
 
     private fun isCollection(type: KSType): Boolean {
@@ -130,7 +113,8 @@ class ValixProcessor(
     private fun generateValidator(
         resolver: Resolver,
         classDecl: KSClassDeclaration,
-        properties: List<KSPropertyDeclaration>
+        classDescriptors: List<ConstraintDescriptor>,
+        propertyDescriptors: Map<KSPropertyDeclaration, List<ConstraintDescriptor>>
     ) {
         val packageName = classDecl.packageName.asString()
         val generatedPackageName = "$packageName.generated"
@@ -150,7 +134,56 @@ class ValixProcessor(
 
         validateFun.addStatement("val errors = mutableListOf<%T>()", ClassName("io.valix.core", "ValidationError"))
 
-        for (property in properties) {
+        // Class-level validation
+        for (desc in classDescriptors) {
+            val fqName = desc.annotationFqName
+            val generator = if (desc.validatorFqName != null) {
+                CustomValidatorGenerator
+            } else {
+                PluginRegistry.getGenerator(fqName)
+            }
+
+            if (generator != null) {
+                if (!generator.validate(classDecl, desc.annotation, logger)) {
+                    continue
+                }
+
+                // Add auxiliary properties
+                val auxProps = generator.generateAuxiliaryProperties(classDecl, desc.annotation, className)
+                for (p in auxProps) {
+                    if (validatorObject.propertySpecs.none { it.name == p.name }) {
+                        validatorObject.addProperty(p)
+                    }
+                }
+
+                val finalMsg = if (desc.message.isNotEmpty()) desc.message else generator.getDefaultMessage(desc.annotation)
+
+                val groupCheck = if (desc.groups.isEmpty()) {
+                    CodeBlock.of("groups.isEmpty()")
+                } else {
+                    val groupMatch = desc.groups.map { CodeBlock.of("it == %T::class", ClassName.bestGuess(it)) }.joinToCode(" || ")
+                    CodeBlock.of("groups.isEmpty() || groups.any { %L }", groupMatch)
+                }
+
+                val condition = generator.generateCondition(classDecl, desc.annotation, "value")
+                val errorField = generator.getErrorField(classDecl, desc.annotation, "")
+                val rejectedValueExpr = generator.getRejectedValueExpression(classDecl, desc.annotation, "value")
+
+                validateFun.addComment("Class-level validation: %L", fqName)
+                validateFun.beginControlFlow("if (%L)", groupCheck)
+                validateFun.beginControlFlow("if (%L)", condition)
+                validateFun.addStatement(
+                    "errors.add(%T(field = %S, code = %S, message = %S, rejectedValue = %L, constraint = %S, path = %S))",
+                    ClassName("io.valix.core", "ValidationError"),
+                    errorField, generator.errorCode, finalMsg, rejectedValueExpr, fqName, errorField
+                )
+                validateFun.endControlFlow()
+                validateFun.endControlFlow()
+            }
+        }
+
+        // Property-level validation
+        for ((property, descriptors) in propertyDescriptors) {
             val propName = property.simpleName.asString()
             val type = property.type.resolve()
             val isNullable = type.isMarkedNullable
@@ -167,56 +200,48 @@ class ValixProcessor(
 
             val checksBuilder = CodeBlock.builder()
 
-            // Run rule validations and code generation
-            for (ann in property.annotations) {
-                val fqName = ann.annotationType.resolve().declaration.qualifiedName?.asString() ?: ""
-                if (fqName == "io.valix.annotations.NotNull" || fqName == "io.valix.annotations.Valid") continue
+            // Run constraint descriptors validations and code generation
+            for (desc in descriptors) {
+                val fqName = desc.annotationFqName
+                val generator = if (desc.validatorFqName != null) {
+                    CustomValidatorGenerator
+                } else {
+                    PluginRegistry.getGenerator(fqName)
+                }
 
-                val rule = ruleRegistry[fqName]
-                if (rule != null) {
-                    if (!rule.validate(property, ann, logger)) {
+                if (generator != null) {
+                    if (!generator.validate(property, desc.annotation, logger)) {
                         continue
                     }
 
-                    // Collect auxiliary fields (regex patterns, allowed value sets)
-                    val auxProps = rule.generateAuxiliaryProperties(property, ann, propName)
+                    // Collect auxiliary fields (e.g. regex patterns, allowed value sets)
+                    val auxProps = generator.generateAuxiliaryProperties(property, desc.annotation, propName)
                     for (p in auxProps) {
                         if (validatorObject.propertySpecs.none { it.name == p.name }) {
                             validatorObject.addProperty(p)
                         }
                     }
 
-                    val parsedMessage = ann.arguments.firstOrNull { it.name?.asString() == "message" }?.value as? String ?: ""
-                    val finalMsg = if (parsedMessage.isNotEmpty()) parsedMessage else rule.getDefaultMessage(ann)
+                    val finalMsg = if (desc.message.isNotEmpty()) desc.message else generator.getDefaultMessage(desc.annotation)
 
-                    val groups = mutableListOf<String>()
-                    val groupsArg = ann.arguments.firstOrNull { it.name?.asString() == "groups" }?.value as? List<*>
-                    if (groupsArg != null) {
-                        for (g in groupsArg) {
-                            if (g is KSType) {
-                                val gn = g.declaration.qualifiedName?.asString()
-                                if (gn != null) {
-                                    groups.add(gn)
-                                }
-                            }
-                        }
-                    }
-
-                    val groupCheck = if (groups.isEmpty()) {
+                    val groupCheck = if (desc.groups.isEmpty()) {
                         CodeBlock.of("groups.isEmpty()")
                     } else {
-                        val groupMatch = groups.map { CodeBlock.of("it == %T::class", ClassName.bestGuess(it)) }.joinToCode(" || ")
+                        val groupMatch = desc.groups.map { CodeBlock.of("it == %T::class", ClassName.bestGuess(it)) }.joinToCode(" || ")
                         CodeBlock.of("groups.isEmpty() || groups.any { %L }", groupMatch)
                     }
 
-                    val condition = rule.generateCondition(property, ann, valName)
+                    val condition = generator.generateCondition(property, desc.annotation, valName)
+
+                    val errorField = generator.getErrorField(property, desc.annotation, propName)
+                    val rejectedValueExpr = generator.getRejectedValueExpression(property, desc.annotation, valName)
 
                     checksBuilder.beginControlFlow("if (%L)", groupCheck)
                     checksBuilder.beginControlFlow("if (%L)", condition)
                     checksBuilder.addStatement(
-                        "errors.add(%T(%S, %S, %S, %L))",
+                        "errors.add(%T(field = %S, code = %S, message = %S, rejectedValue = %L, constraint = %S, path = %S))",
                         ClassName("io.valix.core", "ValidationError"),
-                        propName, rule.errorCode, finalMsg, valName
+                        errorField, generator.errorCode, finalMsg, rejectedValueExpr, fqName, errorField
                     )
                     checksBuilder.endControlFlow()
                     checksBuilder.endControlFlow()
@@ -238,8 +263,9 @@ class ValixProcessor(
                         checksBuilder.addStatement("val itemResult = %T.validate(item, *groups)", elementValidatorCN)
                         checksBuilder.beginControlFlow("itemResult.errors.forEach { error ->")
                         checksBuilder.addStatement(
-                            "errors.add(%T(%S + index + %S + error.field, error.code, error.message, error.rejectedValue))",
+                            "errors.add(%T(field = %S + index + %S + error.field, code = error.code, message = error.message, rejectedValue = error.rejectedValue, constraint = error.constraint, path = %S + index + %S + error.path))",
                             ClassName("io.valix.core", "ValidationError"),
+                            "$propName[", "].",
                             "$propName[", "]."
                         )
                         checksBuilder.endControlFlow()
@@ -255,8 +281,9 @@ class ValixProcessor(
                         checksBuilder.addStatement("val nestedResult = %T.validate(%L, *groups)", nestedValidatorCN, valName)
                         checksBuilder.beginControlFlow("nestedResult.errors.forEach { error ->")
                         checksBuilder.addStatement(
-                            "errors.add(%T(%S + error.field, error.code, error.message, error.rejectedValue))",
+                            "errors.add(%T(field = %S + error.field, code = error.code, message = error.message, rejectedValue = error.rejectedValue, constraint = error.constraint, path = %S + error.path))",
                             ClassName("io.valix.core", "ValidationError"),
+                            "$propName.",
                             "$propName."
                         )
                         checksBuilder.endControlFlow()
@@ -277,7 +304,7 @@ class ValixProcessor(
             if (notNullAnn != null) {
                 hasNotNull = true
                 notNullMessage = notNullAnn.arguments.firstOrNull { it.name?.asString() == "message" }?.value as? String ?: ""
-                val groupsArg = notNullAnn.arguments.firstOrNull { it.name?.asString() == "groups" }?.value as? List<*>
+                val groupsArg = notNullAnn.arguments.firstOrNull { notNullAnn.arguments.isNotEmpty() && it.name?.asString() == "groups" }?.value as? List<*>
                 if (groupsArg != null) {
                     for (g in groupsArg) {
                         if (g is KSType) {
@@ -303,9 +330,9 @@ class ValixProcessor(
                     validateFun.beginControlFlow("if (%L == null)", valName)
                     validateFun.beginControlFlow("if (%L)", groupCheck)
                     validateFun.addStatement(
-                        "errors.add(%T(%S, %S, %S, null))",
+                        "errors.add(%T(field = %S, code = %S, message = %S, rejectedValue = null, constraint = %S, path = %S))",
                         ClassName("io.valix.core", "ValidationError"),
-                        propName, "NOT_NULL", finalMsg
+                        propName, "NOT_NULL", finalMsg, "io.valix.annotations.NotNull", propName
                     )
                     validateFun.endControlFlow()
                     validateFun.nextControlFlow("else")
