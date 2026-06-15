@@ -10,15 +10,14 @@ Inspired by NestJS's `class-validator` and Java's Bean Validation (JSR 380), Val
 
 - **Zero Reflection**: All validators are generated as pure Kotlin code at compile time. No performance hit or startup delays.
 - **Android & JVM Friendly**: Works seamlessly on Android and JVM without requiring custom Proguard/R8 reflection rules.
-- **Strict Compile-Time Safety**: Generates clean, human-readable Kotlin code that is type-safe.
+- **Strict Compile-Time Safety**: Generates clean, human-readable Kotlin code that is type-safe. Unsupported uses (e.g. `@MinLength` on `Int`) fail compilation immediately.
 - **Low Allocation Overhead**: Minimizes garbage collection allocations by using a simple procedural check sequence.
-- **Nullability Aware**: Avoids unnecessary checks and compiler warnings by treating Kotlin's nullable (`String?`) and non-nullable (`String`) types correctly.
-- **Nested Object Validation**: Validate complex nested objects using `@Valid` with deep path propagation (e.g. `address.city` or `address.country.name`).
-- **Collection Validation**: Validate elements of `List`, `Set`, and `Iterable` types using `@Valid` (with index propagation, e.g. `nicknames[1].name`).
+- **Nullability Aware**: Avoids unnecessary checks and compiler warnings by treating Kotlin's nullable (`T?`) and non-nullable (`T`) types correctly.
+- **Nested Object & Collection Validation**: Validate complex nested objects and collection elements using `@Valid` with deep path and index propagation (e.g. `address.city` or `nicknames[1].name`).
 - **Validation Groups**: JSR-380 style validation groups (marker interfaces) to selectively execute validation checks.
 - **Custom Messages**: Supply custom validation error messages directly on annotations.
 - **Reflection-Free Registry**: A global generated `ValixRegistry` to validate any registered class dynamically.
-- **Fully Backward Compatible**: Keeps supporting Phase 1 validators (`<ClassName>ValixValidator`) and constructors.
+- **Fully Backward Compatible**: Keeps supporting older validation interfaces (`<ClassName>ValixValidator`).
 
 ---
 
@@ -26,7 +25,7 @@ Inspired by NestJS's `class-validator` and Java's Bean Validation (JSR 380), Val
 
 - **`valix-annotations`**: Lightweight SOURCE-retention annotation definitions. 
 - **`valix-core`**: Defines the shared models (`ValidationError`, `ValidationResult`) and core contracts.
-- **`valix-ksp`**: The KSP symbol processor that reads annotations and generates validator code.
+- **`valix-ksp`**: The KSP symbol processor that reads annotations, validates correctness, and generates validator code.
 - **`sample-jvm`**: Demonstrates the integration and validates usage.
 - **`sample-android`**: Showcases Android module compatibility.
 
@@ -61,13 +60,6 @@ dependencies {
     // KSP annotation processor
     ksp("io.valix:valix-ksp:1.0.0")
 }
-
-// Optionally make Gradle aware of generated KSP source directory:
-kotlin {
-    sourceSets.main {
-        kotlin.srcDir("build/generated/ksp/main/kotlin")
-    }
-}
 ```
 
 ---
@@ -78,100 +70,136 @@ All validation constraints support:
 - `message: String = ""` to customize error messages.
 - `groups: Array<KClass<*>> = []` to specify validation groups.
 
+### String Constraints (Applicable only to `String` and `String?`)
+
 | Annotation | Description | Error Code | Default Message |
 | :--- | :--- | :--- | :--- |
 | `@NotNull` | Must not be null (only relevant for nullable types) | `NOT_NULL` | `must not be null` |
 | `@NotBlank` | Must not be empty or blank space | `NOT_BLANK` | `must not be blank` |
-| `@Email` | Must match a lightweight email regex | `EMAIL_INVALID` | `invalid email` |
+| `@Email` | Must match a standard email regex | `EMAIL_INVALID` | `invalid email` |
 | `@MinLength(val)`| Minimum character length | `MIN_LENGTH` | `minimum length is X` |
 | `@MaxLength(val)`| Maximum character length | `MAX_LENGTH` | `maximum length is X` |
 | `@Pattern(regex)`| Must match the specified regular expression | `PATTERN_MISMATCH`| `pattern mismatch` |
-| `@Valid` | Instructs Valix to perform nested or collection validation | *Propagated* | *Propagated* |
+| `@Url` | Must be a valid URL | `URL_INVALID` | `invalid URL` |
+| `@PhoneNumber` | Must be a valid phone number | `PHONE_INVALID` | `invalid phone number` |
+| `@Alpha` | Must contain only alphabetic characters | `ALPHA_INVALID` | `must contain only alphabetic characters` |
+| `@AlphaNumeric`| Must contain only alphanumeric characters | `ALPHANUMERIC_INVALID`| `must contain only alphanumeric characters` |
+| `@LowerCase` | Must be completely lowercase | `LOWERCASE_INVALID` | `must be lowercase` |
+| `@UpperCase` | Must be completely uppercase | `UPPERCASE_INVALID` | `must be uppercase` |
+| `@Contains(val)`| Must contain the specified substring | `CONTAINS_INVALID` | `must contain 'X'` |
+| `@StartsWith(val)`| Must start with the specified prefix | `STARTS_WITH_INVALID`| `must start with 'X'` |
+| `@EndsWith(val)`| Must end with the specified suffix | `ENDS_WITH_INVALID` | `must end with 'X'` |
+
+### Numeric Constraints (Applicable to `Int`, `Long`, `Float`, `Double`, `Short` and nullable equivalents)
+
+| Annotation | Description | Error Code | Default Message |
+| :--- | :--- | :--- | :--- |
+| `@Min(val)` | Must be greater than or equal to `val` | `MIN_VALUE` | `must be at least X` |
+| `@Max(val)` | Must be less than or equal to `val` | `MAX_VALUE` | `must be at most X` |
+| `@Range(min, max)`| Must be between `min` and `max` inclusive | `RANGE_INVALID` | `must be between min and max` |
+| `@Positive` | Must be strictly greater than 0 | `POSITIVE_REQUIRED` | `must be positive` |
+| `@PositiveOrZero`| Must be greater than or equal to 0 | `POSITIVE_REQUIRED` | `must be positive or zero` |
+| `@Negative` | Must be strictly less than 0 | `NEGATIVE_REQUIRED` | `must be negative` |
+| `@NegativeOrZero`| Must be less than or equal to 0 | `NEGATIVE_REQUIRED` | `must be negative or zero` |
+
+### Collection Constraints (Applicable to `List`, `Set`, `Collection`, `Iterable` and nullable equivalents)
+
+| Annotation | Description | Error Code | Default Message |
+| :--- | :--- | :--- | :--- |
+| `@NotEmpty` | Collection must contain at least one element | `NOT_EMPTY` | `must not be empty` |
+| `@Size(min, max)`| Element count must be between `min` and `max` inclusive| `SIZE_INVALID` | `size must be between min and max` |
+
+### Enum Constraints (Applicable to Enum class properties or String properties)
+
+| Annotation | Description | Error Code | Default Message |
+| :--- | :--- | :--- | :--- |
+| `@AllowedValues(val)`| Value must match one of the specified allowed values | `INVALID_ENUM_VALUE` | `value must be one of allowed values` |
+
+### Date & Time Constraints (Applicable to `LocalDate`, `LocalDateTime`, `Instant`, `OffsetDateTime`)
+
+| Annotation | Description | Error Code | Default Message |
+| :--- | :--- | :--- | :--- |
+| `@Past` | Date/time must be strictly in the past | `PAST_REQUIRED` | `must be in the past` |
+| `@PastOrPresent`| Date/time must be in the past or present | `PAST_REQUIRED` | `must be in the past or present` |
+| `@Future` | Date/time must be strictly in the future | `FUTURE_REQUIRED` | `must be in the future` |
+| `@FutureOrPresent`| Date/time must be in the future or present | `FUTURE_REQUIRED` | `must be in the future or present` |
+
+---
+
+## ⚡ Strict Compile-Time Type Safety
+
+Valix validates all annotations and their parameters during compilation. The compiler will immediately fail with a compilation error if:
+- A constraint is applied to an unsupported type (e.g. `@MinLength` on `Int` or `@Past` on `Boolean`).
+- Annotation arguments are invalid (e.g. `@Range(min = 100, max = 1)` or `@Size(min = 10, max = 2)`).
 
 ---
 
 ## 💡 Usage Example
 
-### 1. Define your Validation Groups & Data Classes
+### 1. Define your Data Classes
 
 ```kotlin
-package com.example.auth
+package com.example.user
 
 import io.valix.annotations.*
+import java.time.LocalDate
 
-// Validation Group marker interfaces
-interface Create
-interface Update
+enum class UserRole {
+    ADMIN, USER
+}
 
-data class Country(
-    @NotBlank(message = "Country name must not be blank")
-    val name: String
+data class Profile(
+    @Url
+    val website: String?,
+
+    @Past
+    val birthDate: LocalDate?
 )
 
-data class Address(
-    @NotBlank
-    val city: String,
-
-    @Valid
-    val country: Country?
-)
-
-data class Nickname(
-    @MinLength(value = 3, message = "Nickname too short")
-    val name: String
-)
-
-data class RegisterRequest(
-    @Email(groups = [Create::class], message = "Custom email invalid")
+data class User(
+    @Email
     val email: String,
 
-    @Valid
-    val address: Address,
+    @Min(18)
+    val age: Int,
+
+    @AllowedValues(["ADMIN", "USER"])
+    val role: UserRole,
+
+    @NotEmpty
+    @Size(min = 1, max = 5)
+    val hobbies: List<String>?,
 
     @Valid
-    val nicknames: List<Nickname>?
+    val profile: Profile
 )
 ```
 
 ### 2. Run Validation
 
-During compilation, Valix generates a validator class called `RegisterRequestValidator` (and a backward-compatible alias `RegisterRequestValixValidator`) in the `com.example.auth.generated` package.
-
 ```kotlin
-package com.example.auth
+package com.example.user
 
-import com.example.auth.generated.RegisterRequestValidator
+import com.example.user.generated.UserValidator
 
-fun handleRegistration(request: RegisterRequest) {
-    // Validate request using 'Create' group
-    val result = RegisterRequestValidator.validate(request, Create::class)
+fun validateUser(user: User) {
+    val result = UserValidator.validate(user)
     
     if (result.valid) {
-        println("Request is valid! Processing...")
+        println("User is valid!")
     } else {
-        println("Validation failed with errors:")
         result.errors.forEach { error ->
-            println(" - Field: ${error.field}, Code: ${error.code}, Message: ${error.message}, Rejected: ${error.rejectedValue}")
+            println("Field: ${error.field}, Error: ${error.message}, Rejected: ${error.rejectedValue}")
         }
     }
 }
 ```
 
-If we execute this with invalid data:
-- `address.city = " "`
-- `address.country.name = " "`
-- `nicknames = listOf(Nickname("Al"))`
-
-The error fields will propagate paths:
-- `address.city`
-- `address.country.name` (Message: `Country name must not be blank`)
-- `nicknames[0].name` (Message: `Nickname too short`, Rejected: `Al`)
-
 ---
 
 ## 🗃️ Global ValixRegistry
 
-Valix compiles a reflection-free global registry `io.valix.generated.ValixRegistry` containing all compile-time registered validator mappings. This is extremely useful for running validation dynamically on generic inputs (e.g. at an HTTP router or gateway controller layer):
+Valix compiles a reflection-free global registry `io.valix.generated.ValixRegistry` containing all compile-time registered validator mappings. This is extremely useful for running validation dynamically on generic inputs:
 
 ```kotlin
 import io.valix.generated.ValixRegistry
@@ -186,50 +214,8 @@ fun validatePayload(payload: Any) {
 
 ---
 
-## 🔍 How Code Generation Works Under the Hood
+## 🚀 Migration Notes
 
-For the nested data classes above, KSP generates standard, easy-to-read Kotlin files:
-
-```kotlin
-package com.example.auth.generated
-
-import com.example.auth.RegisterRequest
-import io.valix.core.ValidationError
-import io.valix.core.ValidationResult
-import kotlin.reflect.KClass
-
-public object RegisterRequestValidator {
-  public fun validate(value: RegisterRequest, vararg groups: KClass<*>): ValidationResult {
-    val errors = mutableListOf<ValidationError>()
-    
-    // Validate email with group check
-    val emailVal = value.email
-    val groupCheckEmail = groups.isEmpty() || groups.any { it == com.example.auth.Create::class }
-    if (groupCheckEmail) {
-      if (!EMAIL_REGEX.matches(emailVal)) {
-        errors.add(ValidationError("email", "EMAIL_INVALID", "Custom email invalid", emailVal))
-      }
-    }
-    
-    // Validate address nested object
-    val addressVal = value.address
-    val addressResult = com.example.auth.generated.AddressValidator.validate(addressVal, *groups)
-    addressResult.errors.forEach { error ->
-      errors.add(ValidationError("address." + error.field, error.code, error.message, error.rejectedValue))
-    }
-    
-    // Validate nicknames list
-    val nicknamesVal = value.nicknames
-    if (nicknamesVal != null) {
-      nicknamesVal.forEachIndexed { index, item ->
-        val itemResult = com.example.auth.generated.NicknameValidator.validate(item, *groups)
-        itemResult.errors.forEach { error ->
-          errors.add(ValidationError("nicknames[" + index + "]." + error.field, error.code, error.message, error.rejectedValue))
-        }
-      }
-    }
-    
-    return ValidationResult(errors.isEmpty(), errors)
-  }
-}
-```
+- **Naming evolution**: `Valix` now generates `<ClassName>Validator` as the primary validator class.
+- **Backward compatibility**: The older suffix `<ClassName>ValixValidator` continues to be generated and works as an alias delegating directly to `<ClassName>Validator`.
+- **`ValidationError` upgrade**: `ValidationError` now contains `rejectedValue: Any?` to retrieve the invalid value causing the constraint check to fail. Legacy constructions continue to work seamlessly.

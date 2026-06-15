@@ -254,4 +254,202 @@ class ValidationTest {
         val passwordError = result.errors.find { it.field == "password" }
         assertEquals("MIN_LENGTH", passwordError?.code)
     }
+
+    @Test
+    fun testPhase3StringValidators() {
+        val validModel = Phase3TestModel(
+            website = "https://valix.io",
+            phone = "+1-555-0199",
+            alphabetic = "AbcDef",
+            alphanumeric = "Abc123Def",
+            lowercase = "lowercaseonly",
+            uppercase = "UPPERCASEONLY",
+            tag = "hello valix user",
+            code = "PREFIX_xyz",
+            suffix = "sample_suffix",
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = null, names = null, stringRole = null, enumRole = null,
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val validResult = Phase3TestModelValidator.validate(validModel)
+        assertTrue(validResult.valid)
+
+        val invalidModel = Phase3TestModel(
+            website = "not_a_website",
+            phone = "123", 
+            alphabetic = "Alpha1", 
+            alphanumeric = "Alpha1#", 
+            lowercase = "LowerClass",
+            uppercase = "UpperClass",
+            tag = "hello admin",
+            code = "NOTPREFIX_",
+            suffix = "no_suff",
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = null, names = null, stringRole = null, enumRole = null,
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val invalidResult = Phase3TestModelValidator.validate(invalidModel)
+        assertFalse(invalidResult.valid)
+        assertEquals(9, invalidResult.errors.size)
+        
+        assertEquals("URL_INVALID", invalidResult.errors.find { it.field == "website" }?.code)
+        assertEquals("PHONE_INVALID", invalidResult.errors.find { it.field == "phone" }?.code)
+        assertEquals("ALPHA_INVALID", invalidResult.errors.find { it.field == "alphabetic" }?.code)
+        assertEquals("ALPHANUMERIC_INVALID", invalidResult.errors.find { it.field == "alphanumeric" }?.code)
+        assertEquals("LOWERCASE_INVALID", invalidResult.errors.find { it.field == "lowercase" }?.code)
+        assertEquals("UPPERCASE_INVALID", invalidResult.errors.find { it.field == "uppercase" }?.code)
+        assertEquals("CONTAINS_INVALID", invalidResult.errors.find { it.field == "tag" }?.code)
+        assertEquals("STARTS_WITH_INVALID", invalidResult.errors.find { it.field == "code" }?.code)
+        assertEquals("ENDS_WITH_INVALID", invalidResult.errors.find { it.field == "suffix" }?.code)
+    }
+
+    @Test
+    fun testPhase3NumericValidators() {
+        val validModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = 10,
+            maxVal = 100L,
+            positiveVal = 0.1,
+            positiveOrZeroVal = 0.0f,
+            negativeVal = -1,
+            negativeOrZeroVal = 0L,
+            rangeVal = 25.toShort(),
+            items = null, names = null, stringRole = null, enumRole = null,
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val validResult = Phase3TestModelValidator.validate(validModel)
+        assertTrue(validResult.valid)
+
+        val invalidModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = 9,
+            maxVal = 101L,
+            positiveVal = 0.0, 
+            positiveOrZeroVal = -0.1f,
+            negativeVal = 0, 
+            negativeOrZeroVal = 1L,
+            rangeVal = 4.toShort(), 
+            items = null, names = null, stringRole = null, enumRole = null,
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val invalidResult = Phase3TestModelValidator.validate(invalidModel)
+        assertFalse(invalidResult.valid)
+        assertEquals(7, invalidResult.errors.size)
+        
+        assertEquals("MIN_VALUE", invalidResult.errors.find { it.field == "minVal" }?.code)
+        assertEquals("MAX_VALUE", invalidResult.errors.find { it.field == "maxVal" }?.code)
+        assertEquals("POSITIVE_REQUIRED", invalidResult.errors.find { it.field == "positiveVal" }?.code)
+        assertEquals("POSITIVE_REQUIRED", invalidResult.errors.find { it.field == "positiveOrZeroVal" }?.code)
+        assertEquals("NEGATIVE_REQUIRED", invalidResult.errors.find { it.field == "negativeVal" }?.code)
+        assertEquals("NEGATIVE_REQUIRED", invalidResult.errors.find { it.field == "negativeOrZeroVal" }?.code)
+        assertEquals("RANGE_INVALID", invalidResult.errors.find { it.field == "rangeVal" }?.code)
+    }
+
+    @Test
+    fun testPhase3CollectionValidators() {
+        val validModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = listOf("A"),
+            names = setOf("A", "B", "C"),
+            stringRole = null, enumRole = null,
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val validResult = Phase3TestModelValidator.validate(validModel)
+        assertTrue(validResult.valid)
+
+        val invalidModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = emptyList(), 
+            names = setOf("A"), 
+            stringRole = null, enumRole = null,
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val invalidResult = Phase3TestModelValidator.validate(invalidModel)
+        assertFalse(invalidResult.valid)
+        assertEquals(2, invalidResult.errors.size)
+        
+        assertEquals("NOT_EMPTY", invalidResult.errors.find { it.field == "items" }?.code)
+        assertEquals("SIZE_INVALID", invalidResult.errors.find { it.field == "names" }?.code)
+    }
+
+    @Test
+    fun testPhase3EnumValidators() {
+        val validModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = null, names = null,
+            stringRole = "ADMIN",
+            enumRole = UserRole.USER,
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val validResult = Phase3TestModelValidator.validate(validModel)
+        assertTrue(validResult.valid)
+
+        val invalidModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = null, names = null,
+            stringRole = "GUEST", 
+            enumRole = UserRole.GUEST, 
+            pastDate = null, pastOrPresentDateTime = null, futureInstant = null, futureOrPresentOffset = null
+        )
+        val invalidResult = Phase3TestModelValidator.validate(invalidModel)
+        assertFalse(invalidResult.valid)
+        assertEquals(2, invalidResult.errors.size)
+        
+        assertEquals("INVALID_ENUM_VALUE", invalidResult.errors.find { it.field == "stringRole" }?.code)
+        assertEquals("INVALID_ENUM_VALUE", invalidResult.errors.find { it.field == "enumRole" }?.code)
+    }
+
+    @Test
+    fun testPhase3DateValidators() {
+        val now = java.time.LocalDate.now()
+        val validModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = null, names = null, stringRole = null, enumRole = null,
+            pastDate = now.minusDays(1),
+            pastOrPresentDateTime = java.time.LocalDateTime.now().minusSeconds(1),
+            futureInstant = java.time.Instant.now().plusSeconds(3600),
+            futureOrPresentOffset = java.time.OffsetDateTime.now().plusDays(1)
+        )
+        val validResult = Phase3TestModelValidator.validate(validModel)
+        assertTrue(validResult.valid)
+
+        val invalidModel = Phase3TestModel(
+            website = null, phone = null, alphabetic = null, alphanumeric = null,
+            lowercase = null, uppercase = null, tag = null, code = null, suffix = null,
+            minVal = null, maxVal = null, positiveVal = null, positiveOrZeroVal = null,
+            negativeVal = null, negativeOrZeroVal = null, rangeVal = null,
+            items = null, names = null, stringRole = null, enumRole = null,
+            pastDate = now.plusDays(1), 
+            pastOrPresentDateTime = java.time.LocalDateTime.now().plusDays(1), 
+            futureInstant = java.time.Instant.now().minusSeconds(3600), 
+            futureOrPresentOffset = java.time.OffsetDateTime.now().minusDays(1) 
+        )
+        val invalidResult = Phase3TestModelValidator.validate(invalidModel)
+        assertFalse(invalidResult.valid)
+        assertEquals(4, invalidResult.errors.size)
+        
+        assertEquals("PAST_REQUIRED", invalidResult.errors.find { it.field == "pastDate" }?.code)
+        assertEquals("PAST_REQUIRED", invalidResult.errors.find { it.field == "pastOrPresentDateTime" }?.code)
+        assertEquals("FUTURE_REQUIRED", invalidResult.errors.find { it.field == "futureInstant" }?.code)
+        assertEquals("FUTURE_REQUIRED", invalidResult.errors.find { it.field == "futureOrPresentOffset" }?.code)
+    }
 }
