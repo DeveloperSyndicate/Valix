@@ -154,7 +154,16 @@ object ConstraintResolver {
                 !name.startsWith("java.lang.annotation.")
             }.toList()
 
-            if (validatorFqName != null || metaAnnotations.isEmpty()) {
+            val isBuiltIn = fqName.startsWith("io.valix.annotations.")
+            val isCustom = validatorFqName != null
+
+            val composed = if (metaAnnotations.isNotEmpty()) {
+                resolveRecursive(metaAnnotations, targetType, errorNode, resolver, logger, isObjectLevel)
+            } else {
+                emptyList()
+            }
+
+            if (isBuiltIn || isCustom) {
                 descriptors.add(
                     ConstraintDescriptor(
                         annotationFqName = fqName,
@@ -169,8 +178,7 @@ object ConstraintResolver {
                 )
             }
 
-            if (metaAnnotations.isNotEmpty()) {
-                val composed = resolveRecursive(metaAnnotations, targetType, errorNode, resolver, logger, isObjectLevel)
+            if (composed.isNotEmpty()) {
                 val mappedComposed = composed.map { comp ->
                     comp.copy(
                         groups = if (comp.groups.isEmpty()) groups else comp.groups,

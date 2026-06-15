@@ -10,7 +10,13 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(RequestMappingHandlerAdapter::class)
-class ValixSpringAutoConfiguration {
+class ValixSpringAutoConfiguration(
+    private val messageSource: org.springframework.context.MessageSource
+) {
+
+    init {
+        io.valix.metadata.ValixConfig.messageResolver = SpringMessageResolver(messageSource)
+    }
 
     @Bean
     fun valixRequestMappingHandlerAdapterPostProcessor(): BeanPostProcessor {

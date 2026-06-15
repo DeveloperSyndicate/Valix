@@ -1,6 +1,7 @@
 package io.valix.ksp
 
 import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -365,11 +366,14 @@ class ValixProcessor(
 
         validatorObject.addFunction(validateFun.build())
 
+        val originatingFiles = classDecl.containingFile?.let { arrayOf(it) } ?: emptyArray()
+        val dependencies = Dependencies(aggregating = false, *originatingFiles)
+
         // File 1: classNameValidator.kt
         val fileSpec1 = FileSpec.builder(generatedPackageName, validatorName)
             .addType(validatorObject.build())
             .build()
-        fileSpec1.writeTo(codeGenerator, aggregating = false)
+        fileSpec1.writeTo(codeGenerator, dependencies)
 
         // File 2: classNameValixValidator.kt (Backward Compatibility)
         val valixValidatorObject = TypeSpec.objectBuilder(valixValidatorName)
@@ -387,7 +391,7 @@ class ValixProcessor(
         val fileSpec2 = FileSpec.builder(generatedPackageName, valixValidatorName)
             .addType(valixValidatorObject.build())
             .build()
-        fileSpec2.writeTo(codeGenerator, aggregating = false)
+        fileSpec2.writeTo(codeGenerator, dependencies)
     }
 
     private fun generateRegistry(classes: List<KSClassDeclaration>) {
@@ -452,7 +456,9 @@ class ValixProcessor(
             .addType(registryObject.build())
             .build()
 
-        fileSpec.writeTo(codeGenerator, aggregating = false)
+        val originatingFiles = classes.mapNotNull { it.containingFile }.toTypedArray()
+        val dependencies = Dependencies(aggregating = true, *originatingFiles)
+        fileSpec.writeTo(codeGenerator, dependencies)
     }
 
     private fun generateMetadata(
@@ -630,7 +636,10 @@ class ValixProcessor(
         val fileSpec = FileSpec.builder(generatedPackageName, metadataObjectName)
             .addType(metadataObject.build())
             .build()
-        fileSpec.writeTo(codeGenerator, aggregating = false)
+
+        val originatingFiles = classDecl.containingFile?.let { arrayOf(it) } ?: emptyArray()
+        val dependencies = Dependencies(aggregating = false, *originatingFiles)
+        fileSpec.writeTo(codeGenerator, dependencies)
     }
 
     private fun generateConstraintMetadataCode(desc: ConstraintDescriptor): CodeBlock {
