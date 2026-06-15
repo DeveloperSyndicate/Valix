@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/sample-android" />
             <option value="$PROJECT_DIR$/sample-jvm" />
             <option value="$PROJECT_DIR$/valix-annotations" />
+            <option value="$PROJECT_DIR$/valix-benchmarks" />
             <option value="$PROJECT_DIR$/valix-compose" />
             <option value="$PROJECT_DIR$/valix-core" />
             <option value="$PROJECT_DIR$/valix-flow" />

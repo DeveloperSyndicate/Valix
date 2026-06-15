@@ -11,7 +11,7 @@ plugins {
     application
 }
 
-apply(plugin = "io.valix.gradle")
+apply(plugin = "com.developersyndicate.valix")
 
 dependencies {
     implementation(project(":valix-annotations"))

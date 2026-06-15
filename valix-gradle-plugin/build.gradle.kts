@@ -10,7 +10,7 @@ kotlin {
 gradlePlugin {
     plugins {
         create("valixPlugin") {
-            id = "io.valix.gradle"
+            id = "com.developersyndicate.valix"
             implementationClass = "io.valix.gradle.ValixGradlePlugin"
         }
     }

@@ -3,17 +3,21 @@ package io.valix.gradle
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.Internal
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import java.net.URLClassLoader
 
+@DisableCachingByDefault(because = "Generates validation artifacts from dynamic classpath metadata")
 abstract class BaseValixTask : DefaultTask() {
 
     @get:InputFiles
+    @get:Classpath
     val classpathFiles: FileCollection by lazy {
         val sourceSets = project.extensions.findByType(SourceSetContainer::class.java)
         sourceSets?.getByName("main")?.runtimeClasspath ?: project.files()
@@ -44,6 +48,7 @@ abstract class BaseValixTask : DefaultTask() {
     }
 }
 
+@DisableCachingByDefault(because = "Generates JSON schemas based on dynamic classpath metadata")
 open class GenerateValixSchemasTask : BaseValixTask() {
 
     @get:OutputDirectory
@@ -72,6 +77,7 @@ open class GenerateValixSchemasTask : BaseValixTask() {
     }
 }
 
+@DisableCachingByDefault(because = "Generates OpenAPI specification based on dynamic classpath metadata")
 open class GenerateValixOpenApiTask : BaseValixTask() {
 
     @get:OutputFile
@@ -106,6 +112,7 @@ open class GenerateValixOpenApiTask : BaseValixTask() {
     }
 }
 
+@DisableCachingByDefault(because = "Generates markdown documentation based on dynamic classpath metadata")
 open class GenerateValixDocsTask : BaseValixTask() {
 
     @get:OutputDirectory
@@ -196,6 +203,7 @@ open class GenerateValixDocsTask : BaseValixTask() {
     }
 }
 
+@DisableCachingByDefault(because = "Generates metadata json based on dynamic classpath metadata")
 open class GenerateValixMetadataTask : BaseValixTask() {
 
     @get:OutputFile
