@@ -123,9 +123,11 @@ class ValixProcessor(
         val valixValidatorName = "${className}ValixValidator"
 
         val validatorObject = TypeSpec.objectBuilder(validatorName)
+            .addSuperinterface(ClassName("io.valix.core", "ValixValidator").parameterizedBy(classDecl.toClassName()))
 
         val kclassType = ClassName("kotlin.reflect", "KClass").parameterizedBy(WildcardTypeName.producerOf(ANY))
         val validateFun = FunSpec.builder("validate")
+            .addModifiers(KModifier.OVERRIDE)
             .addParameter("value", classDecl.toClassName())
             .addParameter(
                 ParameterSpec.builder("groups", kclassType, KModifier.VARARG).build()

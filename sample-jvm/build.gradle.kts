@@ -7,6 +7,9 @@ plugins {
 dependencies {
     implementation(project(":valix-annotations"))
     implementation(project(":valix-core"))
+    implementation(project(":valix-runtime"))
+    implementation(project(":valix-flow"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     ksp(project(":valix-ksp"))
     testImplementation(kotlin("test"))
 }

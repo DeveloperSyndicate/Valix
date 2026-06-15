@@ -1,12 +1,11 @@
 plugins {
     id("com.android.library")
     kotlin("android")
-    id("com.google.devtools.ksp")
     kotlin("plugin.compose") version "2.3.21"
 }
 
 android {
-    namespace = "io.valix.sample.android"
+    namespace = "io.valix.compose"
     compileSdk = 35
 
     defaultConfig {
@@ -24,17 +23,12 @@ android {
 }
 
 dependencies {
-    implementation(project(":valix-annotations"))
     implementation(project(":valix-core"))
     implementation(project(":valix-runtime"))
-    implementation(project(":valix-flow"))
-    implementation(project(":valix-viewmodel"))
-    implementation(project(":valix-compose"))
-    ksp(project(":valix-ksp"))
-
     implementation("androidx.compose.runtime:runtime:1.7.5")
     implementation("androidx.compose.foundation:foundation:1.7.5")
     implementation("androidx.compose.ui:ui:1.7.5")
     implementation("androidx.compose.material3:material3:1.3.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
