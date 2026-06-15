@@ -13,8 +13,20 @@
             <option value="$PROJECT_DIR$/sample-android" />
             <option value="$PROJECT_DIR$/sample-jvm" />
             <option value="$PROJECT_DIR$/valix-annotations" />
+            <option value="$PROJECT_DIR$/valix-compose" />
             <option value="$PROJECT_DIR$/valix-core" />
+            <option value="$PROJECT_DIR$/valix-flow" />
+            <option value="$PROJECT_DIR$/valix-gradle-plugin" />
             <option value="$PROJECT_DIR$/valix-ksp" />
+            <option value="$PROJECT_DIR$/valix-ktor" />
+            <option value="$PROJECT_DIR$/valix-localization" />
+            <option value="$PROJECT_DIR$/valix-metadata" />
+            <option value="$PROJECT_DIR$/valix-micronaut" />
+            <option value="$PROJECT_DIR$/valix-runtime" />
+            <option value="$PROJECT_DIR$/valix-schema" />
+            <option value="$PROJECT_DIR$/valix-serialization" />
+            <option value="$PROJECT_DIR$/valix-spring" />
+            <option value="$PROJECT_DIR$/valix-viewmodel" />
           </set>
         </option>
         <option name="myGradleHome" value="" />

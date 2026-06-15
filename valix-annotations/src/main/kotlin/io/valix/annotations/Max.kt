@@ -7,5 +7,6 @@ import kotlin.reflect.KClass
 annotation class Max(
     val value: Long,
     val message: String = "",
+    val messageKey: String = "",
     val groups: Array<KClass<*>> = []
 )

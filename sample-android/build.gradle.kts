@@ -26,6 +26,7 @@ android {
 dependencies {
     implementation(project(":valix-annotations"))
     implementation(project(":valix-core"))
+    implementation(project(":valix-metadata"))
     implementation(project(":valix-runtime"))
     implementation(project(":valix-flow"))
     implementation(project(":valix-viewmodel"))

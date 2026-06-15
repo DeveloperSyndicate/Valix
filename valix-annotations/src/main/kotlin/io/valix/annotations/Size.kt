@@ -8,5 +8,6 @@ annotation class Size(
     val min: Int,
     val max: Int,
     val message: String = "",
+    val messageKey: String = "",
     val groups: Array<KClass<*>> = []
 )

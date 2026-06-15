@@ -6,5 +6,6 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.ANNOTATION_CLASS)
 annotation class NegativeOrZero(
     val message: String = "",
+    val messageKey: String = "",
     val groups: Array<KClass<*>> = []
 )

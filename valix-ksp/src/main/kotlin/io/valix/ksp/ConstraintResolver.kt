@@ -132,6 +132,7 @@ object ConstraintResolver {
 
             // Parse common parameters
             val message = ann.arguments.firstOrNull { it.name?.asString() == "message" }?.value as? String ?: ""
+            val messageKey = ann.arguments.firstOrNull { it.name?.asString() == "messageKey" }?.value as? String ?: ""
 
             val groups = mutableListOf<String>()
             val groupsArg = ann.arguments.firstOrNull { it.name?.asString() == "groups" }?.value as? List<*>
@@ -159,6 +160,7 @@ object ConstraintResolver {
                         annotationFqName = fqName,
                         validatorFqName = validatorFqName,
                         message = message,
+                        messageKey = messageKey,
                         groups = groups,
                         targetType = targetType,
                         annotation = ann,
@@ -172,7 +174,8 @@ object ConstraintResolver {
                 val mappedComposed = composed.map { comp ->
                     comp.copy(
                         groups = if (comp.groups.isEmpty()) groups else comp.groups,
-                        message = if (comp.message.isEmpty()) message else comp.message
+                        message = if (comp.message.isEmpty()) message else comp.message,
+                        messageKey = if (comp.messageKey.isEmpty()) messageKey else comp.messageKey
                     )
                 }
                 descriptors.addAll(mappedComposed)

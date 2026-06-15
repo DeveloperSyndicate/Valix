@@ -6,5 +6,6 @@ data class ValidationError(
     val message: String,
     val rejectedValue: Any? = null,
     val constraint: String? = null,
-    val path: String = field
+    val path: String = field,
+    val messageKey: String = ""
 )

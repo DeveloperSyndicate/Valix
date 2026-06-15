@@ -50,4 +50,61 @@ interface ConstraintGenerator {
         annotation: KSAnnotation,
         propName: String
     ): List<PropertySpec> = emptyList()
+
+    /**
+     * Maps the annotation to a ConstraintMetadata object at compile time.
+     */
+    fun toConstraintMetadata(
+        annotation: KSAnnotation,
+        message: String,
+        messageKey: String,
+        groups: List<String>
+    ): io.valix.metadata.ConstraintMetadata {
+        val params = mutableMapOf<String, Any>()
+        for (arg in annotation.arguments) {
+            val name = arg.name?.asString()
+            if (name != null && name != "message" && name != "messageKey" && name != "groups") {
+                val value = arg.value
+                if (value != null) {
+                    if (value is Collection<*>) {
+                        params[name] = value.map { it?.toString() ?: "" }
+                    } else if (value is Array<*>) {
+                        params[name] = value.map { it?.toString() ?: "" }
+                    } else {
+                        params[name] = value
+                    }
+                }
+            }
+        }
+
+        val keyword = when (annotationFqName) {
+            "io.valix.annotations.MinLength" -> io.valix.metadata.SchemaKeyword.MIN_LENGTH
+            "io.valix.annotations.MaxLength" -> io.valix.metadata.SchemaKeyword.MAX_LENGTH
+            "io.valix.annotations.Pattern" -> io.valix.metadata.SchemaKeyword.PATTERN
+            "io.valix.annotations.Email" -> io.valix.metadata.SchemaKeyword.FORMAT_EMAIL
+            "io.valix.annotations.Url" -> io.valix.metadata.SchemaKeyword.FORMAT_URI
+            "io.valix.annotations.Min" -> io.valix.metadata.SchemaKeyword.MINIMUM
+            "io.valix.annotations.Max" -> io.valix.metadata.SchemaKeyword.MAXIMUM
+            "io.valix.annotations.NotEmpty" -> io.valix.metadata.SchemaKeyword.NOT_EMPTY
+            "io.valix.annotations.Size" -> io.valix.metadata.SchemaKeyword.CUSTOM
+            "io.valix.annotations.AllowedValues" -> io.valix.metadata.SchemaKeyword.ENUM_VALUES
+            else -> io.valix.metadata.SchemaKeyword.NONE
+        }
+
+        val resolvedMessageKey = messageKey.ifEmpty {
+            val shortName = annotation.annotationType.resolve().declaration.simpleName.asString().lowercase()
+            "valix.$shortName"
+        }
+
+        return io.valix.metadata.ConstraintMetadata(
+            annotationFqName = annotationFqName,
+            constraintCode = errorCode,
+            messageKey = resolvedMessageKey,
+            defaultMessage = message.ifEmpty { getDefaultMessage(annotation) },
+            params = params,
+            groups = groups,
+            isCustom = false,
+            schemaKeyword = keyword
+        )
+    }
 }

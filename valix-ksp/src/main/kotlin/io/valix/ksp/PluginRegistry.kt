@@ -137,4 +137,43 @@ object CustomValidatorGenerator : ConstraintGenerator {
 
         return listOf(propSpec.build())
     }
+
+    override fun toConstraintMetadata(
+        annotation: KSAnnotation,
+        message: String,
+        messageKey: String,
+        groups: List<String>
+    ): io.valix.metadata.ConstraintMetadata {
+        val fqName = annotation.annotationType.resolve().declaration.qualifiedName?.asString() ?: ""
+        val params = mutableMapOf<String, Any>()
+        for (arg in annotation.arguments) {
+            val name = arg.name?.asString()
+            if (name != null && name != "message" && name != "messageKey" && name != "groups") {
+                val value = arg.value
+                if (value != null) {
+                    if (value is Collection<*>) {
+                        params[name] = value.map { it?.toString() ?: "" }
+                    } else if (value is Array<*>) {
+                        params[name] = value.map { it?.toString() ?: "" }
+                    } else {
+                        params[name] = value
+                    }
+                }
+            }
+        }
+        val resolvedMessageKey = messageKey.ifEmpty {
+            val shortName = annotation.annotationType.resolve().declaration.simpleName.asString().lowercase()
+            "valix.$shortName"
+        }
+        return io.valix.metadata.ConstraintMetadata(
+            annotationFqName = fqName,
+            constraintCode = errorCode,
+            messageKey = resolvedMessageKey,
+            defaultMessage = message.ifEmpty { defaultMessage },
+            params = params,
+            groups = groups,
+            isCustom = true,
+            schemaKeyword = io.valix.metadata.SchemaKeyword.CUSTOM
+        )
+    }
 }

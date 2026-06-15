@@ -9,5 +9,6 @@ annotation class FieldsMatch(
     val first: String,
     val second: String,
     val message: String = "",
+    val messageKey: String = "",
     val groups: Array<KClass<*>> = []
 )

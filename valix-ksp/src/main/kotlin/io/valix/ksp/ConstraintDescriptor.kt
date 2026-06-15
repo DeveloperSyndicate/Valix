@@ -7,6 +7,7 @@ data class ConstraintDescriptor(
     val annotationFqName: String,
     val validatorFqName: String?, // FQN of the custom validator class (if any)
     val message: String,
+    val messageKey: String,
     val groups: List<String>,
     val targetType: KSType,
     val annotation: KSAnnotation,

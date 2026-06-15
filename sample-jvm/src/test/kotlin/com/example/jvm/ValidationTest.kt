@@ -2,10 +2,22 @@ package com.example.jvm
 
 import com.example.jvm.generated.*
 import io.valix.generated.ValixRegistry
+import io.valix.localization.PropertiesMessageResolver
+import io.valix.localization.resolveMessages
+import io.valix.metadata.ValixConfig
+import io.valix.metadata.MetadataRegistry
+import io.valix.schema.JsonSchemaGenerator
+import io.valix.schema.OpenApiSchemaGenerator
+import io.valix.serialization.toJson
+import io.valix.serialization.mergeValixMetadata
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.test.assertNotNull
 
 class ValidationTest {
 
@@ -564,6 +576,88 @@ class ValidationTest {
         assertEquals("differentPassword", error.rejectedValue)
         assertEquals("io.valix.annotations.FieldsMatch", error.constraint)
         assertEquals("confirmPassword", error.path)
+    }
+
+    @Test
+    fun testLocalization() {
+        val _triggerRegistry = io.valix.generated.ValixRegistry
+        val resolver = PropertiesMessageResolver()
+        ValixConfig.messageResolver = resolver
+        ValixConfig.defaultLocale = Locale.ENGLISH
+
+        val user = TestUser(
+            username = "user",
+            displayName = "", // violates NotBlank
+            email = "invalid-email", // violates Email
+            shortCode = "12", // violates MinLength(5)
+            longCode = "12345",
+            numericCode = "123"
+        )
+        val result = TestUserValidator.validate(user)
+        assertFalse(result.valid)
+
+        // Resolve messages in English (default)
+        val resolvedEn = result.resolveMessages()
+        val blankErrorEn = resolvedEn.errors.find { it.field == "displayName" }
+        val emailErrorEn = resolvedEn.errors.find { it.field == "email" }
+        val lenErrorEn = resolvedEn.errors.find { it.field == "shortCode" }
+
+        assertEquals("must not be blank", blankErrorEn?.message)
+        assertEquals("invalid email", emailErrorEn?.message)
+        assertEquals("minimum length is 5", lenErrorEn?.message)
+
+        // Resolve messages in Hindi
+        val resolvedHi = result.resolveMessages(locale = Locale("hi"))
+        val blankErrorHi = resolvedHi.errors.find { it.field == "displayName" }
+        val emailErrorHi = resolvedHi.errors.find { it.field == "email" }
+        assertEquals("खाली नहीं होना चाहिए", blankErrorHi?.message)
+        assertEquals("अमान्य ईमेल", emailErrorHi?.message)
+
+        // Resolve messages in French
+        val resolvedFr = result.resolveMessages(locale = Locale.FRENCH)
+        val blankErrorFr = resolvedFr.errors.find { it.field == "displayName" }
+        assertEquals("ne doit pas être vide", blankErrorFr?.message)
+
+        // Resolve messages in Spanish
+        val resolvedEs = result.resolveMessages(locale = Locale("es"))
+        val blankErrorEs = resolvedEs.errors.find { it.field == "displayName" }
+        assertEquals("no debe estar en blanco", blankErrorEs?.message)
+    }
+
+    @Test
+    fun testJsonSchemaAndOpenApiGeneration() {
+        val _triggerRegistry = io.valix.generated.ValixRegistry
+        val metadata = MetadataRegistry.get(TestUser::class)
+        assertNotNull(metadata)
+
+        val jsonSchema = JsonSchemaGenerator.generate(metadata)
+        assertTrue(jsonSchema.contains("\"title\": \"TestUser\""))
+        assertTrue(jsonSchema.contains("\"type\": \"string\""))
+        assertTrue(jsonSchema.contains("\"minLength\": 5"))
+        assertTrue(jsonSchema.contains("\"format\": \"email\""))
+
+        val openApiYaml = OpenApiSchemaGenerator.generateComponent(metadata)
+        assertTrue(openApiYaml.contains("TestUser:"))
+        assertTrue(openApiYaml.contains("type: string"))
+        assertTrue(openApiYaml.contains("minLength: 5"))
+        assertTrue(openApiYaml.contains("format: email"))
+    }
+
+    @Test
+    fun testSerializationBridge() {
+        val _triggerRegistry = io.valix.generated.ValixRegistry
+        val metadata = MetadataRegistry.get(TestUser::class)
+        assertNotNull(metadata)
+
+        val jsonMetadata = metadata.toJson()
+        assertTrue(jsonMetadata.contains("\"modelFqName\": \"com.example.jvm.TestUser\""))
+        assertTrue(jsonMetadata.contains("\"name\": \"email\""))
+
+        val descriptor = PrimitiveSerialDescriptor("username", PrimitiveKind.STRING)
+        val enriched = descriptor.mergeValixMetadata(metadata)
+        assertEquals(metadata, enriched.metadata)
+        assertEquals("username", enriched.original.serialName)
+        assertEquals(metadata.fields.find { it.name == "email" }, enriched.getFieldMetadata("email"))
     }
 }
 

@@ -7,5 +7,6 @@ import kotlin.reflect.KClass
 annotation class EndsWith(
     val value: String,
     val message: String = "",
+    val messageKey: String = "",
     val groups: Array<KClass<*>> = []
 )

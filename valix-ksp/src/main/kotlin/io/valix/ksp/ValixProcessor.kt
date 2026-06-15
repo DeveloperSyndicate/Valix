@@ -69,6 +69,7 @@ class ValixProcessor(
 
             if (classDescriptors.isNotEmpty() || propertyDescriptors.isNotEmpty()) {
                 generateValidator(resolver, classDecl, classDescriptors, propertyDescriptors)
+                generateMetadata(classDecl, classDescriptors, propertyDescriptors)
                 generatedClasses.add(classDecl)
             }
         }
@@ -174,10 +175,14 @@ class ValixProcessor(
                 validateFun.addComment("Class-level validation: %L", fqName)
                 validateFun.beginControlFlow("if (%L)", groupCheck)
                 validateFun.beginControlFlow("if (%L)", condition)
+                val resolvedMessageKey = desc.messageKey.ifEmpty {
+                    val shortName = desc.annotation.annotationType.resolve().declaration.simpleName.asString().lowercase()
+                    "valix.$shortName"
+                }
                 validateFun.addStatement(
-                    "errors.add(%T(field = %S, code = %S, message = %S, rejectedValue = %L, constraint = %S, path = %S))",
+                    "errors.add(%T(field = %S, code = %S, message = %S, messageKey = %S, rejectedValue = %L, constraint = %S, path = %S))",
                     ClassName("io.valix.core", "ValidationError"),
-                    errorField, generator.errorCode, finalMsg, rejectedValueExpr, fqName, errorField
+                    errorField, generator.errorCode, finalMsg, resolvedMessageKey, rejectedValueExpr, fqName, errorField
                 )
                 validateFun.endControlFlow()
                 validateFun.endControlFlow()
@@ -240,10 +245,14 @@ class ValixProcessor(
 
                     checksBuilder.beginControlFlow("if (%L)", groupCheck)
                     checksBuilder.beginControlFlow("if (%L)", condition)
+                    val resolvedMessageKey = desc.messageKey.ifEmpty {
+                        val shortName = desc.annotation.annotationType.resolve().declaration.simpleName.asString().lowercase()
+                        "valix.$shortName"
+                    }
                     checksBuilder.addStatement(
-                        "errors.add(%T(field = %S, code = %S, message = %S, rejectedValue = %L, constraint = %S, path = %S))",
+                        "errors.add(%T(field = %S, code = %S, message = %S, messageKey = %S, rejectedValue = %L, constraint = %S, path = %S))",
                         ClassName("io.valix.core", "ValidationError"),
-                        errorField, generator.errorCode, finalMsg, rejectedValueExpr, fqName, errorField
+                        errorField, generator.errorCode, finalMsg, resolvedMessageKey, rejectedValueExpr, fqName, errorField
                     )
                     checksBuilder.endControlFlow()
                     checksBuilder.endControlFlow()
@@ -331,10 +340,12 @@ class ValixProcessor(
 
                     validateFun.beginControlFlow("if (%L == null)", valName)
                     validateFun.beginControlFlow("if (%L)", groupCheck)
+                    val resolvedMessageKey = notNullAnn!!.arguments.firstOrNull { it.name?.asString() == "messageKey" }?.value as? String ?: ""
+                    val finalMessageKey = resolvedMessageKey.ifEmpty { "valix.notnull" }
                     validateFun.addStatement(
-                        "errors.add(%T(field = %S, code = %S, message = %S, rejectedValue = null, constraint = %S, path = %S))",
+                        "errors.add(%T(field = %S, code = %S, message = %S, messageKey = %S, rejectedValue = null, constraint = %S, path = %S))",
                         ClassName("io.valix.core", "ValidationError"),
-                        propName, "NOT_NULL", finalMsg, "io.valix.annotations.NotNull", propName
+                        propName, "NOT_NULL", finalMsg, finalMessageKey, "io.valix.annotations.NotNull", propName
                     )
                     validateFun.endControlFlow()
                     validateFun.nextControlFlow("else")
@@ -417,6 +428,14 @@ class ValixProcessor(
 
         registryObject.addProperty(validatorsProp)
 
+        // Metadata registry auto-registration in ValixRegistry init block
+        val initBlock = CodeBlock.builder()
+        for (clazz in classes) {
+            val metadataCN = ClassName("${clazz.packageName.asString()}.generated", "${clazz.simpleName.asString()}ValidationMetadata")
+            initBlock.addStatement("%T.register(%T)", ClassName("io.valix.metadata", "MetadataRegistry"), metadataCN)
+        }
+        registryObject.addInitializerBlock(initBlock.build())
+
         val validateFun = FunSpec.builder("validate")
             .addParameter("value", ANY)
             .addParameter(
@@ -434,5 +453,267 @@ class ValixProcessor(
             .build()
 
         fileSpec.writeTo(codeGenerator, aggregating = false)
+    }
+
+    private fun generateMetadata(
+        classDecl: KSClassDeclaration,
+        classDescriptors: List<ConstraintDescriptor>,
+        propertyDescriptors: Map<KSPropertyDeclaration, List<ConstraintDescriptor>>
+    ) {
+        val packageName = classDecl.packageName.asString()
+        val generatedPackageName = "$packageName.generated"
+        val className = classDecl.simpleName.asString()
+        val metadataObjectName = "${className}ValidationMetadata"
+
+        val metadataObject = TypeSpec.objectBuilder(metadataObjectName)
+            .addSuperinterface(ClassName("io.valix.metadata", "ValixModelMetadata"))
+
+        metadataObject.addProperty(
+            PropertySpec.builder("modelFqName", String::class, KModifier.OVERRIDE)
+                .initializer("%S", classDecl.qualifiedName?.asString() ?: "")
+                .build()
+        )
+
+        metadataObject.addProperty(
+            PropertySpec.builder("modelSimpleName", String::class, KModifier.OVERRIDE)
+                .initializer("%S", className)
+                .build()
+        )
+
+        metadataObject.addProperty(
+            PropertySpec.builder("schemaVersion", Int::class, KModifier.OVERRIDE)
+                .initializer("1")
+                .build()
+        )
+
+        metadataObject.addProperty(
+            PropertySpec.builder("metadataVersion", String::class, KModifier.OVERRIDE)
+                .initializer("%S", "1.0.0")
+                .build()
+        )
+
+        val fieldsCodeBlock = CodeBlock.builder()
+        fieldsCodeBlock.add("listOf(\n").indent()
+
+        val properties = classDecl.getAllProperties().toList()
+        for (i in properties.indices) {
+            val property = properties[i]
+            val propName = property.simpleName.asString()
+            val type = property.type.resolve()
+            val typeFqn = type.declaration.qualifiedName?.asString() ?: "kotlin.Any"
+            val nullable = type.isMarkedNullable
+
+            val notNullAnn = property.annotations.firstOrNull {
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.NotNull"
+            }
+            val hasNotNull = notNullAnn != null
+            val required = !nullable || hasNotNull
+
+            val docAnn = property.annotations.firstOrNull {
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.ValixDoc"
+            }
+            val displayName = docAnn?.arguments?.firstOrNull { it.name?.asString() == "displayName" }?.value as? String ?: ""
+            val description = docAnn?.arguments?.firstOrNull { it.name?.asString() == "description" }?.value as? String ?: ""
+            val finalDisplayName = displayName.ifEmpty { propName }
+
+            val descriptors = propertyDescriptors[property] ?: emptyList()
+            val constraintsBlocks = mutableListOf<CodeBlock>()
+
+            if (hasNotNull) {
+                val message = notNullAnn.arguments.firstOrNull { it.name?.asString() == "message" }?.value as? String ?: ""
+                val messageKey = notNullAnn.arguments.firstOrNull { it.name?.asString() == "messageKey" }?.value as? String ?: ""
+                val resolvedMessageKey = messageKey.ifEmpty { "valix.notnull" }
+                val notNullGroups = mutableListOf<String>()
+                val groupsArg = notNullAnn.arguments.firstOrNull { it.name?.asString() == "groups" }?.value as? List<*>
+                if (groupsArg != null) {
+                    for (g in groupsArg) {
+                        if (g is KSType) {
+                            g.declaration.qualifiedName?.asString()?.let { notNullGroups.add(it) }
+                        }
+                    }
+                }
+                val groupsCode = if (notNullGroups.isEmpty()) {
+                    CodeBlock.of("emptyList()")
+                } else {
+                    val groupItems = notNullGroups.map { CodeBlock.of("%S", it) }.joinToCode(", ")
+                    CodeBlock.of("listOf(%L)", groupItems)
+                }
+                constraintsBlocks.add(
+                    CodeBlock.of(
+                        "%T(annotationFqName = %S, constraintCode = %S, messageKey = %S, defaultMessage = %S, params = emptyMap(), groups = %L, isCustom = false, schemaKeyword = %T.REQUIRED)",
+                        ClassName("io.valix.metadata", "ConstraintMetadata"),
+                        "io.valix.annotations.NotNull",
+                        "NOT_NULL",
+                        resolvedMessageKey,
+                        message.ifEmpty { "must not be null" },
+                        groupsCode,
+                        ClassName("io.valix.metadata", "SchemaKeyword")
+                    )
+                )
+            }
+
+            for (desc in descriptors) {
+                constraintsBlocks.add(generateConstraintMetadataCode(desc))
+            }
+
+            val constraintsListCode = if (constraintsBlocks.isEmpty()) {
+                CodeBlock.of("emptyList()")
+            } else {
+                CodeBlock.builder().add("listOf(\n").indent()
+                    .add(constraintsBlocks.joinToCode(",\n"))
+                    .unindent().add("\n)").build()
+            }
+
+            fieldsCodeBlock.add(
+                "%T(name = %S, type = %S, nullable = %L, required = %L, constraints = %L, displayName = %S, description = %S)",
+                ClassName("io.valix.metadata", "FieldMetadata"),
+                propName,
+                typeFqn,
+                nullable,
+                required,
+                constraintsListCode,
+                finalDisplayName,
+                description
+            )
+            if (i < properties.size - 1) {
+                fieldsCodeBlock.add(",\n")
+            }
+        }
+        fieldsCodeBlock.unindent().add("\n)")
+
+        metadataObject.addProperty(
+            PropertySpec.builder("fields", ClassName("kotlin.collections", "List").parameterizedBy(ClassName("io.valix.metadata", "FieldMetadata")), KModifier.OVERRIDE)
+                .initializer(fieldsCodeBlock.build())
+                .build()
+        )
+
+        val classConstraintsBlocks = mutableListOf<CodeBlock>()
+        for (desc in classDescriptors) {
+            classConstraintsBlocks.add(generateConstraintMetadataCode(desc))
+        }
+        val classConstraintsCode = if (classConstraintsBlocks.isEmpty()) {
+            CodeBlock.of("emptyList()")
+        } else {
+            CodeBlock.builder().add("listOf(\n").indent()
+                .add(classConstraintsBlocks.joinToCode(",\n"))
+                .unindent().add("\n)").build()
+        }
+
+        metadataObject.addProperty(
+            PropertySpec.builder("classConstraints", ClassName("kotlin.collections", "List").parameterizedBy(ClassName("io.valix.metadata", "ConstraintMetadata")), KModifier.OVERRIDE)
+                .initializer(classConstraintsCode)
+                .build()
+        )
+
+        val allGroups = mutableSetOf<String>()
+        for (desc in classDescriptors) {
+            allGroups.addAll(desc.groups)
+        }
+        for (descs in propertyDescriptors.values) {
+            for (desc in descs) {
+                allGroups.addAll(desc.groups)
+            }
+        }
+        val groupsListCode = if (allGroups.isEmpty()) {
+            CodeBlock.of("emptyList()")
+        } else {
+            val groupItems = allGroups.map { CodeBlock.of("%S", it) }.joinToCode(", ")
+            CodeBlock.of("listOf(%L)", groupItems)
+        }
+
+        metadataObject.addProperty(
+            PropertySpec.builder("groups", ClassName("kotlin.collections", "List").parameterizedBy(ClassName("kotlin", "String")), KModifier.OVERRIDE)
+                .initializer(groupsListCode)
+                .build()
+        )
+
+        val fileSpec = FileSpec.builder(generatedPackageName, metadataObjectName)
+            .addType(metadataObject.build())
+            .build()
+        fileSpec.writeTo(codeGenerator, aggregating = false)
+    }
+
+    private fun generateConstraintMetadataCode(desc: ConstraintDescriptor): CodeBlock {
+        val fqName = desc.annotationFqName
+        val generator = if (desc.validatorFqName != null) {
+            CustomValidatorGenerator
+        } else {
+            PluginRegistry.getGenerator(fqName)
+        }
+
+        val errorCode = generator?.errorCode ?: "CUSTOM"
+        val defaultMessage = generator?.defaultMessage ?: ""
+        val isCustom = desc.validatorFqName != null
+
+        val schemaKeywordVal = when (fqName) {
+            "io.valix.annotations.MinLength" -> "MIN_LENGTH"
+            "io.valix.annotations.MaxLength" -> "MAX_LENGTH"
+            "io.valix.annotations.Pattern" -> "PATTERN"
+            "io.valix.annotations.Email" -> "FORMAT_EMAIL"
+            "io.valix.annotations.Url" -> "FORMAT_URI"
+            "io.valix.annotations.Min" -> "MINIMUM"
+            "io.valix.annotations.Max" -> "MAXIMUM"
+            "io.valix.annotations.NotEmpty" -> "NOT_EMPTY"
+            "io.valix.annotations.Size" -> "CUSTOM"
+            "io.valix.annotations.AllowedValues" -> "ENUM_VALUES"
+            else -> "NONE"
+        }
+
+        val paramsCode = CodeBlock.builder().add("mapOf(")
+        val args = desc.annotation.arguments.filter {
+            val name = it.name?.asString()
+            name != "message" && name != "messageKey" && name != "groups"
+        }
+        for (i in args.indices) {
+            val arg = args[i]
+            val name = arg.name?.asString() ?: ""
+            val value = arg.value
+            if (value != null) {
+                val valExpr = if (value is String) {
+                    CodeBlock.of("%S", value)
+                } else if (value is Number || value is Boolean) {
+                    CodeBlock.of("%L", value)
+                } else if (value is Collection<*>) {
+                    val items = value.map { if (it is String) CodeBlock.of("%S", it) else CodeBlock.of("%L", it) }.joinToCode(", ")
+                    CodeBlock.of("listOf(%L)", items)
+                } else if (value is Array<*>) {
+                    val items = value.map { if (it is String) CodeBlock.of("%S", it) else CodeBlock.of("%L", it) }.joinToCode(", ")
+                    CodeBlock.of("listOf(%L)", items)
+                } else {
+                    CodeBlock.of("%S", value.toString())
+                }
+                paramsCode.add("%S to %L", name, valExpr)
+                if (i < args.size - 1) {
+                    paramsCode.add(", ")
+                }
+            }
+        }
+        paramsCode.add(")")
+
+        val groupsCode = if (desc.groups.isEmpty()) {
+            CodeBlock.of("emptyList()")
+        } else {
+            val groupItems = desc.groups.map { CodeBlock.of("%S", it) }.joinToCode(", ")
+            CodeBlock.of("listOf(%L)", groupItems)
+        }
+
+        val resolvedMessageKey = desc.messageKey.ifEmpty {
+            val shortName = desc.annotation.annotationType.resolve().declaration.simpleName.asString().lowercase()
+            "valix.$shortName"
+        }
+
+        return CodeBlock.of(
+            "%T(annotationFqName = %S, constraintCode = %S, messageKey = %S, defaultMessage = %S, params = %L, groups = %L, isCustom = %L, schemaKeyword = %T.%L)",
+            ClassName("io.valix.metadata", "ConstraintMetadata"),
+            fqName,
+            errorCode,
+            resolvedMessageKey,
+            desc.message.ifEmpty { defaultMessage },
+            paramsCode.build(),
+            groupsCode,
+            isCustom,
+            ClassName("io.valix.metadata", "SchemaKeyword"),
+            schemaKeywordVal
+        )
     }
 }

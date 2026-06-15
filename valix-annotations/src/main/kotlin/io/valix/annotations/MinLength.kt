@@ -7,5 +7,6 @@ import kotlin.reflect.KClass
 annotation class MinLength(
     val value: Int,
     val message: String = "",
+    val messageKey: String = "",
     val groups: Array<KClass<*>> = []
 )
