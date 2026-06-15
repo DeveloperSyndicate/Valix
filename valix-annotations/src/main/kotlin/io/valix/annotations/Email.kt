@@ -1,5 +1,10 @@
 package io.valix.annotations
 
+import kotlin.reflect.KClass
+
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.PROPERTY)
-annotation class Email
+annotation class Email(
+    val message: String = "",
+    val groups: Array<KClass<*>> = []
+)

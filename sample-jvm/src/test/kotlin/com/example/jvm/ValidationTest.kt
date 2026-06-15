@@ -1,6 +1,7 @@
 package com.example.jvm
 
-import com.example.jvm.generated.TestUserValixValidator
+import com.example.jvm.generated.*
+import io.valix.generated.ValixRegistry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,15 +19,13 @@ class ValidationTest {
             longCode = "12345",
             numericCode = "998877"
         )
-        val result = TestUserValixValidator.validate(user)
+        val result = TestUserValidator.validate(user)
         assertTrue(result.valid)
         assertTrue(result.errors.isEmpty())
     }
 
     @Test
     fun testNullValues() {
-        // username is @NotNull, so it should fail.
-        // Others are nullable and not @NotNull, so nulls should pass validation.
         val user = TestUser(
             username = null,
             displayName = null,
@@ -35,29 +34,31 @@ class ValidationTest {
             longCode = null,
             numericCode = null
         )
-        val result = TestUserValixValidator.validate(user)
+        val result = TestUserValidator.validate(user)
         assertFalse(result.valid)
         assertEquals(1, result.errors.size)
         assertEquals("username", result.errors[0].field)
         assertEquals("NOT_NULL", result.errors[0].code)
         assertEquals("must not be null", result.errors[0].message)
+        assertEquals(null, result.errors[0].rejectedValue)
     }
 
     @Test
     fun testNotBlankValidation() {
         val user = TestUser(
             username = "user",
-            displayName = "   ", // blank spaces
+            displayName = "   ",
             email = "email@test.com",
             shortCode = "12345",
             longCode = "12345",
             numericCode = "123"
         )
-        val result = TestUserValixValidator.validate(user)
+        val result = TestUserValidator.validate(user)
         assertFalse(result.valid)
         val error = result.errors.find { it.field == "displayName" }
         assertEquals("NOT_BLANK", error?.code)
         assertEquals("must not be blank", error?.message)
+        assertEquals("   ", error?.rejectedValue)
     }
 
     @Test
@@ -70,11 +71,12 @@ class ValidationTest {
             longCode = "12345",
             numericCode = "123"
         )
-        val result = TestUserValixValidator.validate(user)
+        val result = TestUserValidator.validate(user)
         assertFalse(result.valid)
         val error = result.errors.find { it.field == "email" }
         assertEquals("EMAIL_INVALID", error?.code)
         assertEquals("invalid email", error?.message)
+        assertEquals("invalid-email-format", error?.rejectedValue)
     }
 
     @Test
@@ -83,15 +85,16 @@ class ValidationTest {
             username = "user",
             displayName = "display",
             email = "test@email.com",
-            shortCode = "123", // too short (min 5)
+            shortCode = "123",
             longCode = "12345",
             numericCode = "123"
         )
-        val result = TestUserValixValidator.validate(user)
+        val result = TestUserValidator.validate(user)
         assertFalse(result.valid)
         val error = result.errors.find { it.field == "shortCode" }
         assertEquals("MIN_LENGTH", error?.code)
         assertEquals("minimum length is 5", error?.message)
+        assertEquals("123", error?.rejectedValue)
     }
 
     @Test
@@ -101,14 +104,15 @@ class ValidationTest {
             displayName = "display",
             email = "test@email.com",
             shortCode = "12345",
-            longCode = "12345678901", // too long (max 10)
+            longCode = "12345678901",
             numericCode = "123"
         )
-        val result = TestUserValixValidator.validate(user)
+        val result = TestUserValidator.validate(user)
         assertFalse(result.valid)
         val error = result.errors.find { it.field == "longCode" }
         assertEquals("MAX_LENGTH", error?.code)
         assertEquals("maximum length is 10", error?.message)
+        assertEquals("12345678901", error?.rejectedValue)
     }
 
     @Test
@@ -119,12 +123,135 @@ class ValidationTest {
             email = "test@email.com",
             shortCode = "12345",
             longCode = "12345",
-            numericCode = "123a45" // invalid pattern (contains letter)
+            numericCode = "123a45"
         )
-        val result = TestUserValixValidator.validate(user)
+        val result = TestUserValidator.validate(user)
         assertFalse(result.valid)
         val error = result.errors.find { it.field == "numericCode" }
         assertEquals("PATTERN_MISMATCH", error?.code)
         assertEquals("pattern mismatch", error?.message)
+        assertEquals("123a45", error?.rejectedValue)
+    }
+
+    @Test
+    fun testNestedValidationAndPaths() {
+        val nestedUser = User(
+            email = "john@example.com",
+            address = Address(
+                city = "   ", // Blank -> Should trigger NOT_BLANK
+                country = Country(
+                    name = " " // Blank -> Should trigger NOT_BLANK
+                )
+            ),
+            nicknames = listOf(
+                Nickname("Joe"), // Valid
+                Nickname("Al")  // Invalid -> Length 2 < 3
+            )
+        )
+
+        val result = UserValidator.validate(nestedUser)
+        assertFalse(result.valid)
+        
+        // Check errors size and specific fields
+        assertEquals(3, result.errors.size)
+
+        val cityError = result.errors.find { it.field == "address.city" }
+        assertEquals("NOT_BLANK", cityError?.code)
+        assertEquals("must not be blank", cityError?.message)
+        assertEquals("   ", cityError?.rejectedValue)
+
+        val countryError = result.errors.find { it.field == "address.country.name" }
+        assertEquals("NOT_BLANK", countryError?.code)
+        assertEquals("Country name must not be blank", countryError?.message) // custom msg
+        assertEquals(" ", countryError?.rejectedValue)
+
+        val nicknameError = result.errors.find { it.field == "nicknames[1].name" }
+        assertEquals("MIN_LENGTH", nicknameError?.code)
+        assertEquals("Nickname too short", nicknameError?.message) // custom msg
+        assertEquals("Al", nicknameError?.rejectedValue)
+    }
+
+    @Test
+    fun testCollectionSetValidation() {
+        val project = Project(
+            members = setOf(
+                Member("Alice"),
+                Member(" ") // Blank -> Should trigger NOT_BLANK
+            )
+        )
+
+        val result = ProjectValidator.validate(project)
+        assertFalse(result.valid)
+        assertEquals(1, result.errors.size)
+        assertEquals("members[1].name", result.errors[0].field)
+        assertEquals("NOT_BLANK", result.errors[0].code)
+        assertEquals(" ", result.errors[0].rejectedValue)
+    }
+
+    @Test
+    fun testValidationGroups() {
+        val nestedUser = User(
+            email = "invalid-email-format",
+            address = Address(
+                city = "Paris",
+                country = Country("France")
+            ),
+            nicknames = emptyList()
+        )
+
+        // Case 1: Validate with Create group.
+        // Email validation matches Create group -> should trigger error
+        val createResult = UserValidator.validate(nestedUser, Create::class)
+        assertFalse(createResult.valid)
+        assertEquals(1, createResult.errors.size)
+        assertEquals("email", createResult.errors[0].field)
+        assertEquals("Custom email invalid", createResult.errors[0].message)
+
+        // Case 2: Validate with Update group.
+        // Email validation does NOT match Update group -> should be valid
+        val updateResult = UserValidator.validate(nestedUser, Update::class)
+        assertTrue(updateResult.valid)
+
+        // Case 3: Validate with no groups.
+        // Should execute all validations -> triggers error
+        val defaultResult = UserValidator.validate(nestedUser)
+        assertFalse(defaultResult.valid)
+        assertEquals(1, defaultResult.errors.size)
+    }
+
+    @Test
+    fun testRegistryValidation() {
+        val user = TestUser(
+            username = null,
+            displayName = "Display",
+            email = "email@test.com",
+            shortCode = "12345",
+            longCode = "12345",
+            numericCode = "123"
+        )
+        
+        // Validate using ValixRegistry
+        val result = ValixRegistry.validate(user)
+        assertFalse(result.valid)
+        assertEquals(1, result.errors.size)
+        assertEquals("username", result.errors[0].field)
+    }
+
+    @Test
+    fun testBackwardCompatibility() {
+        val request = RegisterRequest(
+            email = "invalid-email",
+            password = "short",
+            username = "validUser"
+        )
+        // Call the Valix suffix validator (which delegates internally to RegisterRequestValidator)
+        val result = RegisterRequestValixValidator.validate(request)
+        assertFalse(result.valid)
+        
+        val emailError = result.errors.find { it.field == "email" }
+        assertEquals("EMAIL_INVALID", emailError?.code)
+
+        val passwordError = result.errors.find { it.field == "password" }
+        assertEquals("MIN_LENGTH", passwordError?.code)
     }
 }

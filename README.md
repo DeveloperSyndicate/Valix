@@ -11,8 +11,14 @@ Inspired by NestJS's `class-validator` and Java's Bean Validation (JSR 380), Val
 - **Zero Reflection**: All validators are generated as pure Kotlin code at compile time. No performance hit or startup delays.
 - **Android & JVM Friendly**: Works seamlessly on Android and JVM without requiring custom Proguard/R8 reflection rules.
 - **Strict Compile-Time Safety**: Generates clean, human-readable Kotlin code that is type-safe.
-- **Low Allocation overhead**: Minimizes garbage collection allocations by using a simple procedural check sequence.
+- **Low Allocation Overhead**: Minimizes garbage collection allocations by using a simple procedural check sequence.
 - **Nullability Aware**: Avoids unnecessary checks and compiler warnings by treating Kotlin's nullable (`String?`) and non-nullable (`String`) types correctly.
+- **Nested Object Validation**: Validate complex nested objects using `@Valid` with deep path propagation (e.g. `address.city` or `address.country.name`).
+- **Collection Validation**: Validate elements of `List`, `Set`, and `Iterable` types using `@Valid` (with index propagation, e.g. `nicknames[1].name`).
+- **Validation Groups**: JSR-380 style validation groups (marker interfaces) to selectively execute validation checks.
+- **Custom Messages**: Supply custom validation error messages directly on annotations.
+- **Reflection-Free Registry**: A global generated `ValixRegistry` to validate any registered class dynamically.
+- **Fully Backward Compatible**: Keeps supporting Phase 1 validators (`<ClassName>ValixValidator`) and constructors.
 
 ---
 
@@ -68,61 +74,112 @@ kotlin {
 
 ## 🏷️ Supported Annotations
 
-Phase 1 supports validation constraints on `String` and `String?` types:
+All validation constraints support:
+- `message: String = ""` to customize error messages.
+- `groups: Array<KClass<*>> = []` to specify validation groups.
 
 | Annotation | Description | Error Code | Default Message |
 | :--- | :--- | :--- | :--- |
-| `@NotNull` | Must not be null (only relevant for `String?`) | `NOT_NULL` | `must not be null` |
+| `@NotNull` | Must not be null (only relevant for nullable types) | `NOT_NULL` | `must not be null` |
 | `@NotBlank` | Must not be empty or blank space | `NOT_BLANK` | `must not be blank` |
 | `@Email` | Must match a lightweight email regex | `EMAIL_INVALID` | `invalid email` |
 | `@MinLength(val)`| Minimum character length | `MIN_LENGTH` | `minimum length is X` |
 | `@MaxLength(val)`| Maximum character length | `MAX_LENGTH` | `maximum length is X` |
 | `@Pattern(regex)`| Must match the specified regular expression | `PATTERN_MISMATCH`| `pattern mismatch` |
+| `@Valid` | Instructs Valix to perform nested or collection validation | *Propagated* | *Propagated* |
 
 ---
 
 ## 💡 Usage Example
 
-### 1. Define your Data Class
+### 1. Define your Validation Groups & Data Classes
 
 ```kotlin
 package com.example.auth
 
 import io.valix.annotations.*
 
-data class RegisterRequest(
-    @NotNull
+// Validation Group marker interfaces
+interface Create
+interface Update
+
+data class Country(
+    @NotBlank(message = "Country name must not be blank")
+    val name: String
+)
+
+data class Address(
     @NotBlank
-    @Email
-    val email: String?,
+    val city: String,
 
-    @MinLength(8)
-    val password: String,
+    @Valid
+    val country: Country?
+)
 
-    @Pattern("^[a-zA-Z0-9]+$")
-    val username: String
+data class Nickname(
+    @MinLength(value = 3, message = "Nickname too short")
+    val name: String
+)
+
+data class RegisterRequest(
+    @Email(groups = [Create::class], message = "Custom email invalid")
+    val email: String,
+
+    @Valid
+    val address: Address,
+
+    @Valid
+    val nicknames: List<Nickname>?
 )
 ```
 
 ### 2. Run Validation
 
-During compilation, Valix generates a validator class called `RegisterRequestValixValidator` in the `com.example.auth.generated` package.
+During compilation, Valix generates a validator class called `RegisterRequestValidator` (and a backward-compatible alias `RegisterRequestValixValidator`) in the `com.example.auth.generated` package.
 
 ```kotlin
 package com.example.auth
 
-import com.example.auth.generated.RegisterRequestValixValidator
+import com.example.auth.generated.RegisterRequestValidator
 
 fun handleRegistration(request: RegisterRequest) {
-    val result = RegisterRequestValixValidator.validate(request)
+    // Validate request using 'Create' group
+    val result = RegisterRequestValidator.validate(request, Create::class)
     
     if (result.valid) {
         println("Request is valid! Processing...")
     } else {
         println("Validation failed with errors:")
         result.errors.forEach { error ->
-            println(" - Field: ${error.field}, Code: ${error.code}, Message: ${error.message}")
+            println(" - Field: ${error.field}, Code: ${error.code}, Message: ${error.message}, Rejected: ${error.rejectedValue}")
         }
+    }
+}
+```
+
+If we execute this with invalid data:
+- `address.city = " "`
+- `address.country.name = " "`
+- `nicknames = listOf(Nickname("Al"))`
+
+The error fields will propagate paths:
+- `address.city`
+- `address.country.name` (Message: `Country name must not be blank`)
+- `nicknames[0].name` (Message: `Nickname too short`, Rejected: `Al`)
+
+---
+
+## 🗃️ Global ValixRegistry
+
+Valix compiles a reflection-free global registry `io.valix.generated.ValixRegistry` containing all compile-time registered validator mappings. This is extremely useful for running validation dynamically on generic inputs (e.g. at an HTTP router or gateway controller layer):
+
+```kotlin
+import io.valix.generated.ValixRegistry
+
+fun validatePayload(payload: Any) {
+    val result = ValixRegistry.validate(payload)
+    if (!result.valid) {
+        // Handle validation errors...
     }
 }
 ```
@@ -131,7 +188,7 @@ fun handleRegistration(request: RegisterRequest) {
 
 ## 🔍 How Code Generation Works Under the Hood
 
-For the `RegisterRequest` class above, KSP generates the following companion object:
+For the nested data classes above, KSP generates standard, easy-to-read Kotlin files:
 
 ```kotlin
 package com.example.auth.generated
@@ -139,38 +196,37 @@ package com.example.auth.generated
 import com.example.auth.RegisterRequest
 import io.valix.core.ValidationError
 import io.valix.core.ValidationResult
-import kotlin.text.Regex
+import kotlin.reflect.KClass
 
-public object RegisterRequestValixValidator {
-  public val EMAIL_REGEX: Regex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}${'$'}")
-  public val PATTERN_USERNAME: Regex = Regex("^[a-zA-Z0-9]+${'$'}")
-
-  public fun validate(value: RegisterRequest): ValidationResult {
+public object RegisterRequestValidator {
+  public fun validate(value: RegisterRequest, vararg groups: KClass<*>): ValidationResult {
     val errors = mutableListOf<ValidationError>()
     
-    // Validation for email
+    // Validate email with group check
     val emailVal = value.email
-    if (emailVal == null) {
-      errors.add(ValidationError("email", "NOT_NULL", "must not be null"))
-    } else {
-      if (emailVal.trim().isEmpty()) {
-        errors.add(ValidationError("email", "NOT_BLANK", "must not be blank"))
-      }
+    val groupCheckEmail = groups.isEmpty() || groups.any { it == com.example.auth.Create::class }
+    if (groupCheckEmail) {
       if (!EMAIL_REGEX.matches(emailVal)) {
-        errors.add(ValidationError("email", "EMAIL_INVALID", "invalid email"))
+        errors.add(ValidationError("email", "EMAIL_INVALID", "Custom email invalid", emailVal))
       }
     }
     
-    // Validation for password
-    val passwordVal = value.password
-    if (passwordVal.length < 8) {
-      errors.add(ValidationError("password", "MIN_LENGTH", "minimum length is 8"))
+    // Validate address nested object
+    val addressVal = value.address
+    val addressResult = com.example.auth.generated.AddressValidator.validate(addressVal, *groups)
+    addressResult.errors.forEach { error ->
+      errors.add(ValidationError("address." + error.field, error.code, error.message, error.rejectedValue))
     }
     
-    // Validation for username
-    val usernameVal = value.username
-    if (!PATTERN_USERNAME.matches(usernameVal)) {
-      errors.add(ValidationError("username", "PATTERN_MISMATCH", "pattern mismatch"))
+    // Validate nicknames list
+    val nicknamesVal = value.nicknames
+    if (nicknamesVal != null) {
+      nicknamesVal.forEachIndexed { index, item ->
+        val itemResult = com.example.auth.generated.NicknameValidator.validate(item, *groups)
+        itemResult.errors.forEach { error ->
+          errors.add(ValidationError("nicknames[" + index + "]." + error.field, error.code, error.message, error.rejectedValue))
+        }
+      }
     }
     
     return ValidationResult(errors.isEmpty(), errors)
