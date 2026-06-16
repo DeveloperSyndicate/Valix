@@ -17,10 +17,8 @@ dependencyResolutionManagement {
 }
 rootProject.name = "valix"
 
-include(":valix-annotations")
 include(":valix-core")
 include(":valix-ksp")
-include(":valix-metadata")
 include(":valix-runtime")
 include(":valix-flow")
 include(":valix-viewmodel")
