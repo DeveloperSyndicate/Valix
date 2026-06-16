@@ -8,7 +8,6 @@ kotlin {
 
 dependencies {
     implementation(project(":valix-core"))
-    implementation(project(":valix-metadata"))
     testImplementation(kotlin("test"))
 }
 

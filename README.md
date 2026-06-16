@@ -49,10 +49,8 @@ Valix is designed for enterprise architectures and integrates out-of-the-box wit
 
 ## 📦 Module Structure
 
-- **`valix-annotations`**: Lightweight SOURCE-retention annotation definitions. 
-- **`valix-core`**: Defines the shared models (`ValidationError`, `ValidationResult`) and core contracts.
+- **`valix-core`**: The core library containing annotations, metadata descriptors, validation registry, and core models (`ValidationError`, `ValidationResult`).
 - **`valix-ksp`**: The KSP symbol processor that reads annotations, validates correctness, and generates validator code.
-- **`valix-metadata`**: The core reflection-free metadata engine.
 - **`valix-localization`**: Properties-based internationalization (i18n) bundle resource engine.
 - **`valix-schema`**: Generates draft-07 JSON Schema and OpenAPI 3.1 YAML descriptors.
 - **`valix-serialization`**: Integrates with `kotlinx.serialization` to enrich descriptor schemas.
@@ -84,12 +82,10 @@ plugins {
 }
 
 dependencies {
-    // Annotations to use in your classes
-    implementation("com.developersyndicate.valix:valix-annotations:1.0.0")
-    // Core runtime models
-    implementation("com.developersyndicate.valix:valix-core:1.0.0")
+    // Valix Core (includes annotations & metadata)
+    implementation("com.developersyndicate.valix:valix-core:1.0.1")
     // KSP annotation processor
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.0")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.1")
 }
 ```
 

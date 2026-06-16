@@ -8,7 +8,6 @@ kotlin {
 
 dependencies {
     implementation(project(":valix-core"))
-    implementation(project(":valix-metadata"))
     implementation(project(":valix-localization"))
 
     compileOnly("io.micronaut:micronaut-inject:4.3.4")
