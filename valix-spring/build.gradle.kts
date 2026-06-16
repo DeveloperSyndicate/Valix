@@ -8,7 +8,6 @@ kotlin {
 
 dependencies {
     implementation(project(":valix-core"))
-    implementation(project(":valix-metadata"))
     implementation(project(":valix-localization"))
 
     compileOnly("org.springframework:spring-web:6.1.5")

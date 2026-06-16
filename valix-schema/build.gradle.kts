@@ -7,7 +7,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":valix-metadata"))
+    implementation(project(":valix-core"))
     testImplementation(kotlin("test"))
 }
 
