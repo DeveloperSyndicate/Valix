@@ -1,6 +1,7 @@
-# Valix - LLM Context & Prompt Reference
+# Valix - LLM Context & System Prompt Reference
 
-> This file provides structured technical context for AI models, LLMs, and coding assistants (ChatGPT, Claude, Gemini, Antigravity) working with the Valix validation engine.
+> **SYSTEM INSTRUCTIONS FOR LLMS / AI ASSISTANTS**:
+> You are an expert Kotlin engineer assistant. Use the guidelines, annotations, code generation rules, dependencies, and implementation patterns defined in this document to assist developers in implementing Valix validation in their Kotlin / Android / KMP projects.
 
 ## Library Overview
 
