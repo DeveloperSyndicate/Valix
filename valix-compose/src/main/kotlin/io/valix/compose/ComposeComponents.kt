@@ -12,6 +12,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import io.valix.core.ValidationError
 
+/**
+ * Displays a field validation error message in Jetpack Compose error styling.
+ *
+ * @param error The [ValidationError] to render, or `null` if the field is valid.
+ * @param modifier Custom composable layout modifier.
+ */
 @Composable
 fun ValidationMessage(
     error: ValidationError?,
@@ -27,6 +33,17 @@ fun ValidationMessage(
     }
 }
 
+/**
+ * Material3 [OutlinedTextField] wrapped with automatic error highlighting and [ValidationMessage] display.
+ *
+ * @param value Current text field input value.
+ * @param onValueChange Callback invoked when text changes.
+ * @param error Optional [ValidationError] associated with this text field.
+ * @param modifier Composable layout modifier.
+ * @param label Text field label string.
+ * @param placeholder Text field placeholder string.
+ * @param onBlur Optional callback invoked when the text field loses focus.
+ */
 @Composable
 fun ValidatedTextField(
     value: String,

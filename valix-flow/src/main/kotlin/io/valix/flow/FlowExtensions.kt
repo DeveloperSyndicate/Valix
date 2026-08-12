@@ -6,6 +6,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.reflect.KClass
 
+/**
+ * Transforms a reactive [Flow] of model values into a [Flow] emitting [ValidationResult] evaluations.
+ *
+ * @param T The type of data value contained in the flow.
+ * @param validator The [ValixValidator] compiled validator instance.
+ * @param groups Optional validation groups to evaluate.
+ * @return A [Flow] emitting a [ValidationResult] for each incoming item.
+ */
 fun <T> Flow<T>.validateWith(
     validator: ValixValidator<T>,
     vararg groups: KClass<*>
