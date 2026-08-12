@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 data class MockUser(val email: String, val age: Int)
 
 object MockUserValidator : ValixValidator<MockUser> {
-    override fun validate(value: MockUser, vararg groups: KClass<*>): ValidationResult {
+    override fun validate(value: MockUser, vararg groups: KClass<*>, failFast: Boolean): ValidationResult {
         val errors = mutableListOf<ValidationError>()
         if (value.email.isBlank()) {
             errors.add(ValidationError("email", "NOT_BLANK", "Email must not be blank", value.email))

@@ -25,9 +25,10 @@ import kotlin.reflect.KClass
 class ComposeFormState<T>(
     private val initialValue: T,
     val validator: ValixValidator<T>,
-    val validationMode: ValidationMode = ValidationMode.OnChange
+    val validationMode: ValidationMode = ValidationMode.OnChange,
+    val failFast: Boolean = false
 ) {
-    private val delegate = FormState(initialValue, validator, validationMode)
+    private val delegate = FormState(initialValue, validator, validationMode, failFast)
 
     /** Current form model value. */
     var value by mutableStateOf(initialValue)

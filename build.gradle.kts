@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.3.21" apply false
+    kotlin("multiplatform") version "2.3.21" apply false
     kotlin("android") version "2.3.21" apply false
     id("com.google.devtools.ksp") version "2.3.9" apply false
     id("com.android.application") version "9.1.1" apply false
@@ -10,7 +11,7 @@ plugins {
 
 allprojects {
     group = "com.developersyndicate.valix"
-    version = "1.0.1"
+    version = "1.0.2"
 }
 
 subprojects {

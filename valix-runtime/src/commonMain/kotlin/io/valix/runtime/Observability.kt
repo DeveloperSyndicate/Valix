@@ -17,11 +17,11 @@ object ValixDiagnostics {
     /** Measures duration of the validation block. */
     inline fun <T> measure(validator: ValixValidator<*>, block: () -> T): T {
         if (!enabled) return block()
-        val start = System.nanoTime()
+        val mark = kotlin.time.TimeSource.Monotonic.markNow()
         return try {
             block()
         } finally {
-            val duration = System.nanoTime() - start
+            val duration = mark.elapsedNow().inWholeNanoseconds
             metrics.record(validator::class, duration)
         }
     }

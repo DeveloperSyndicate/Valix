@@ -83,9 +83,9 @@ plugins {
 
 dependencies {
     // Valix Core (includes annotations & metadata)
-    implementation("com.developersyndicate.valix:valix-core:1.0.1")
+    implementation("com.developersyndicate.valix:valix-core:1.0.2")
     // KSP annotation processor
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.1")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.2")
 }
 ```
 
