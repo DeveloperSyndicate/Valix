@@ -5,8 +5,17 @@ import io.valix.metadata.FieldMetadata
 import io.valix.metadata.ConstraintMetadata
 import io.valix.metadata.SchemaKeyword
 
+/**
+ * Generator producing JSON Schema Draft-07 compliant specification documents from [ValixModelMetadata].
+ */
 object JsonSchemaGenerator {
 
+    /**
+     * Generates a Draft-07 JSON Schema specification string for the target [metadata].
+     *
+     * @param metadata Model validation metadata.
+     * @return Formatted JSON Schema document string.
+     */
     fun generate(metadata: ValixModelMetadata): String {
         val sb = StringBuilder()
         sb.append("{\n")
