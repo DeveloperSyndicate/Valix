@@ -7,13 +7,19 @@ import java.util.Locale
 import java.util.ResourceBundle
 import java.util.MissingResourceException
 
+/**
+ * [MessageResolver] resolving error message keys from `ResourceBundle` `.properties` bundles.
+ *
+ * @param baseName Resource bundle base name (defaults to `"valix-messages"`).
+ */
 class PropertiesMessageResolver(
     private val baseName: String = "valix-messages"
 ) : MessageResolver {
 
-    override fun resolve(key: String, locale: Locale, params: Map<String, Any>): String {
+    override fun resolve(key: String, locale: io.valix.core.ValixLocale, params: Map<String, Any>): String {
+        val javaLocale = Locale(locale.language, locale.country)
         val bundle = try {
-            ResourceBundle.getBundle(baseName, locale)
+            ResourceBundle.getBundle(baseName, javaLocale)
         } catch (e: MissingResourceException) {
             try {
                 ResourceBundle.getBundle(baseName, Locale.ENGLISH)
@@ -31,6 +37,10 @@ class PropertiesMessageResolver(
         return interpolate(template, params)
     }
 
+    fun resolve(key: String, locale: Locale, params: Map<String, Any>): String {
+        return resolve(key, io.valix.core.ValixLocale(locale.language, locale.country), params)
+    }
+
     private fun interpolate(template: String, params: Map<String, Any>): String {
         var result = template
         for ((name, value) in params) {
@@ -40,8 +50,15 @@ class PropertiesMessageResolver(
     }
 }
 
+/**
+ * Extension method resolving message keys for all [ValidationError]s within a [ValidationResult].
+ *
+ * @param locale Target locale for resource bundle lookup (defaults to [ValixConfig.defaultLocale]).
+ * @param resolver Active [MessageResolver] implementation.
+ * @return New [ValidationResult] with localized message strings.
+ */
 fun ValidationResult.resolveMessages(
-    locale: Locale = ValixConfig.defaultLocale,
+    locale: io.valix.core.ValixLocale = ValixConfig.defaultLocale,
     resolver: MessageResolver = ValixConfig.messageResolver
 ): ValidationResult {
     val resolvedErrors = errors.map { error ->
@@ -67,6 +84,11 @@ fun ValidationResult.resolveMessages(
     }
     return ValidationResult(valid, resolvedErrors)
 }
+
+fun ValidationResult.resolveMessages(
+    locale: Locale,
+    resolver: MessageResolver = ValixConfig.messageResolver
+): ValidationResult = resolveMessages(io.valix.core.ValixLocale(locale.language, locale.country), resolver)
 
 private fun findConstraintParams(constraintFqName: String, fieldPath: String): Map<String, Any>? {
     val cleanField = fieldPath.substringBefore("[").substringAfterLast(".")

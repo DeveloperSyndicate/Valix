@@ -8,7 +8,6 @@ kotlin {
 
 dependencies {
     implementation(project(":valix-core"))
-    implementation(project(":valix-metadata"))
     implementation(project(":valix-localization"))
 
     compileOnly("io.ktor:ktor-server-core:2.3.10")

@@ -3,10 +3,17 @@ package io.valix.gradle
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+/**
+ * Gradle Extension DSL configuration block for Valix build tasks (`valix { ... }`).
+ */
 open class ValixExtension {
+    /** Output directory path for generated schemas, documentation, and metadata dumps. */
     var outputDir: String = "build/valix"
 }
 
+/**
+ * Valix Gradle Plugin for automating documentation, OpenAPI schema, JSON schema, and metadata generation.
+ */
 class ValixGradlePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val extension = project.extensions.create("valix", ValixExtension::class.java)

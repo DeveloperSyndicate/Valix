@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.context.annotation.Bean
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
 
+/**
+ * Spring Boot auto-configuration registering Valix controllers advice, message resolver, and argument resolver post-processor.
+ */
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(RequestMappingHandlerAdapter::class)
@@ -18,6 +21,7 @@ class ValixSpringAutoConfiguration(
         io.valix.metadata.ValixConfig.messageResolver = SpringMessageResolver(messageSource)
     }
 
+    /** Post-processor registering [ValixMethodArgumentResolver] on Spring MVC handlers. */
     @Bean
     fun valixRequestMappingHandlerAdapterPostProcessor(): BeanPostProcessor {
         return object : BeanPostProcessor {
@@ -37,6 +41,7 @@ class ValixSpringAutoConfiguration(
         }
     }
 
+    /** Controller advice returning standard 400 Bad Request responses for [ValixValidationException]. */
     @Bean
     fun valixControllerAdvice(): ValixControllerAdvice {
         return ValixControllerAdvice()

@@ -11,19 +11,16 @@ plugins {
     application
 }
 
-apply(plugin = "com.developersyndicate.valix")
 
 dependencies {
-    implementation(project(":valix-annotations"))
     implementation(project(":valix-core"))
-    implementation(project(":valix-metadata"))
     implementation(project(":valix-localization"))
     implementation(project(":valix-schema"))
     implementation(project(":valix-serialization"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
     implementation(project(":valix-runtime"))
     implementation(project(":valix-flow"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     ksp(project(":valix-ksp"))
     testImplementation(kotlin("test"))
 }

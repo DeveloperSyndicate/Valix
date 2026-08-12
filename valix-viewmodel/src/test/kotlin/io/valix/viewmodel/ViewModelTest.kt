@@ -21,7 +21,7 @@ import kotlin.reflect.KClass
 data class VMUser(val username: String)
 
 object VMUserValidator : ValixValidator<VMUser> {
-    override fun validate(value: VMUser, vararg groups: KClass<*>): ValidationResult {
+    override fun validate(value: VMUser, vararg groups: KClass<*>, failFast: Boolean): ValidationResult {
         val errors = mutableListOf<ValidationError>()
         if (value.username.length < 5) {
             errors.add(ValidationError("username", "MIN_LENGTH", "Too short", value.username))

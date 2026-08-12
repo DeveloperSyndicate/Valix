@@ -64,3 +64,15 @@ jobs:
               --title "Release $TAG_NAME" \
               --notes "Automated release of version ${{ steps.get_version.outputs.VERSION }} published to Maven Central."
           fi
+
+      - name: Generate Dokka Documentation
+        run: ./gradlew dokkaHtmlMultiModule --no-configuration-cache
+
+      - name: Deploy Dokka Docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/dokka/htmlMultiModule
+          publish_branch: gh-pages
+          commit_message: "docs: publish Dokka API documentation for version ${{ steps.get_version.outputs.VERSION }}"
+

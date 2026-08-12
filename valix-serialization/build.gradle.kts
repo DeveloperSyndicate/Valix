@@ -7,8 +7,8 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":valix-metadata"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+    implementation(project(":valix-core"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
     testImplementation(kotlin("test"))
 }
 

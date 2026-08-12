@@ -1,17 +1,31 @@
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
 }
 
 kotlin {
-    jvmToolchain(17)
-}
+    jvm {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+    iosArm64()
+    iosX64()
+    iosSimulatorArm64()
+    js(IR) {
+        browser()
+        nodejs()
+    }
+    wasmJs {
+        browser()
+    }
 
-dependencies {
-    implementation(project(":valix-core"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    testImplementation(kotlin("test"))
-}
-
-tasks.test {
-    useJUnitPlatform()
+    sourceSets {
+        commonMain.dependencies {
+            api(project(":valix-core"))
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+    }
 }

@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
 data class ComposeUser(val name: String)
 
 object ComposeUserValidator : ValixValidator<ComposeUser> {
-    override fun validate(value: ComposeUser, vararg groups: KClass<*>): ValidationResult {
+    override fun validate(value: ComposeUser, vararg groups: KClass<*>, failFast: Boolean): ValidationResult {
         val errors = mutableListOf<ValidationError>()
         if (value.name.isBlank()) {
             errors.add(ValidationError("name", "NOT_BLANK", "Empty name", value.name))

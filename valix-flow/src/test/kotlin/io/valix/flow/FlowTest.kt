@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 data class FlowUser(val name: String)
 
 object FlowUserValidator : ValixValidator<FlowUser> {
-    override fun validate(value: FlowUser, vararg groups: KClass<*>): ValidationResult {
+    override fun validate(value: FlowUser, vararg groups: KClass<*>, failFast: Boolean): ValidationResult {
         val errors = mutableListOf<ValidationError>()
         if (value.name.isBlank()) {
             errors.add(ValidationError("name", "NOT_BLANK", "Name must not be blank", value.name))

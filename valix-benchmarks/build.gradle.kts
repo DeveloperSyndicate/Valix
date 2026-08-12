@@ -12,9 +12,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":valix-annotations"))
     implementation(project(":valix-core"))
-    implementation(project(":valix-metadata"))
     implementation(project(":valix-runtime"))
     ksp(project(":valix-ksp"))
 
