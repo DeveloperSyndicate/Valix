@@ -1,0 +1,114 @@
+# Valix - LLM Context & Prompt Reference
+
+> This file provides structured technical context for AI models, LLMs, and coding assistants (ChatGPT, Claude, Gemini, Antigravity) working with the Valix validation engine.
+
+## Library Overview
+
+- **Name**: Valix
+- **Package Group**: `com.developersyndicate.valix`
+- **Core Version**: `1.0.2`
+- **Primary Mechanism**: KSP (Kotlin Symbol Processing) compile-time code generation.
+- **Execution Overhead**: Zero reflection. Procedural bytecode.
+- **Multiplatform Support**: JVM, Android, iOS (`iosArm64`, `iosX64`, `iosSimulatorArm64`), Web (JS), and WebAssembly (Wasm).
+
+---
+
+## Code Generation Conventions
+
+1. For any data class annotated with Valix constraint annotations (or containing `@Valid` properties):
+   ```kotlin
+   package com.example.user
+
+   import io.valix.annotations.*
+
+   data class User(
+       @NotBlank val name: String,
+       @Email val email: String
+   )
+   ```
+2. KSP generates a singleton validator object under package `<packageName>.generated`:
+   ```kotlin
+   import com.example.user.generated.UserValidator
+
+   val result = UserValidator.validate(user)
+   ```
+3. Alternatively, validate dynamically via the reflection-free global registry:
+   ```kotlin
+   import io.valix.generated.ValixRegistry
+
+   val result = ValixRegistry.validate(anyObject)
+   ```
+
+---
+
+## Validation Result & Error Schema
+
+```kotlin
+data class ValidationResult(
+    val valid: Boolean,
+    val errors: List<ValidationError>
+)
+
+data class ValidationError(
+    val field: String,
+    val code: String,
+    val message: String,
+    val messageKey: String = "",
+    val rejectedValue: Any? = null,
+    val constraint: String? = null,
+    val path: String = field
+)
+```
+
+---
+
+## Common Implementation Patterns
+
+### 1. Synchronous Validation
+```kotlin
+val result = UserValidator.validate(user, failFast = false)
+```
+
+### 2. Suspending / Async Validation
+```kotlin
+val result = UserValidator.validateAsync(user, failFast = false)
+```
+
+### 3. Custom Property Validator
+```kotlin
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validator = UsernameValidator::class)
+annotation class Username(
+    val message: String = "invalid username",
+    val groups: Array<KClass<*>> = []
+)
+
+class UsernameValidator : ConstraintValidator<String> {
+    override fun validate(value: String, context: ValidationContext): Boolean {
+        return value.matches(Regex("^[a-z0-9_]+$"))
+    }
+}
+```
+
+### 4. Custom Async Property Validator
+```kotlin
+class AsyncHandleValidator : AsyncConstraintValidator<String> {
+    override suspend fun validate(value: String, context: ValidationContext): Boolean {
+        return repository.isUnique(value)
+    }
+}
+```
+
+### 5. Programmatic Builder DSL
+```kotlin
+val validator = valixDsl<DomainUser> {
+    field("email", DomainUser::email) {
+        notBlank()
+        email()
+    }
+    field("age", DomainUser::age) {
+        min(18)
+    }
+}
+```

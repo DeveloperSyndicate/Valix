@@ -230,8 +230,24 @@ val UserValidator = valixDsl<DomainUser> {
 ### Collection & Enum Constraints
 `@NotEmpty`, `@Size(min, max)`, `@AllowedValues(array)`.
 
-### Date & Time Constraints
-`@Past`, `@PastOrPresent`, `@Future`, `@FutureOrPresent`.
+---
+
+## Documentation & AI Context
+
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+* **[Architecture & Internals](docs/ARCHITECTURE.md)**: KSP processing pipeline, generated code structure, and multiplatform design.
+* **[Developer Cheatsheet](docs/CHEATSHEET.md)**: Annotation quick reference and feature summary.
+* **[Advanced Features](docs/ADVANCED.md)**: `@Sensitive`, `@ValidateIf`, `failFast`, schema export, and `valixDsl`.
+* **Framework Guides**:
+  * [Spring Boot Integration](docs/framework-guides/SPRING.md)
+  * [Ktor Integration](docs/framework-guides/KTOR.md)
+  * [Micronaut Integration](docs/framework-guides/MICRONAUT.md)
+  * [Jetpack Compose Integration](docs/framework-guides/COMPOSE.md)
+  * [ViewModel & Flow Integration](docs/framework-guides/VIEWMODEL_FLOW.md)
+* **AI & LLM Context Prompting**:
+  * **[`docs/LLMS.txt`](docs/LLMS.txt)**: High-density context summary for AI coding assistants.
+  * **[`docs/LLMS_FULL.txt`](docs/LLMS_FULL.txt)**: Complete API and integration reference for LLM context ingestion.
 
 ---
 

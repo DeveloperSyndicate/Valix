@@ -1,0 +1,102 @@
+# Valix Complete API Reference for LLM Context Prompting
+
+## Maven / Gradle Coordinates (Version 1.0.2)
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.3.21"
+    id("com.google.devtools.ksp") version "2.3.9"
+}
+
+dependencies {
+    implementation("com.developersyndicate.valix:valix-core:1.0.2")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.2")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.2")
+
+    // Ecosystem Adapters
+    implementation("com.developersyndicate.valix:valix-spring:1.0.2")
+    implementation("com.developersyndicate.valix:valix-ktor:1.0.2")
+    implementation("com.developersyndicate.valix:valix-micronaut:1.0.2")
+    implementation("com.developersyndicate.valix:valix-compose:1.0.2")
+    implementation("com.developersyndicate.valix:valix-flow:1.0.2")
+    implementation("com.developersyndicate.valix:valix-viewmodel:1.0.2")
+    implementation("com.developersyndicate.valix:valix-schema:1.0.2")
+    implementation("com.developersyndicate.valix:valix-serialization:1.0.2")
+}
+```
+
+---
+
+## Complete Annotation Catalogue & Parameters
+
+### String Constraints (`io.valix.annotations.*`)
+- `@NotNull(message = "", messageKey = "", groups = [])`
+- `@NotBlank(message = "", messageKey = "", groups = [])`
+- `@NotEmpty(message = "", messageKey = "", groups = [])`
+- `@Email(message = "", messageKey = "", groups = [])`
+- `@MinLength(value = 0, message = "", messageKey = "", groups = [])`
+- `@MaxLength(value = 255, message = "", messageKey = "", groups = [])`
+- `@Pattern(regex = "", message = "", messageKey = "", groups = [])`
+- `@Url(message = "", messageKey = "", groups = [])`
+- `@PhoneNumber(message = "", messageKey = "", groups = [])`
+- `@Alpha(message = "", messageKey = "", groups = [])`
+- `@AlphaNumeric(message = "", messageKey = "", groups = [])`
+- `@LowerCase(message = "", messageKey = "", groups = [])`
+- `@UpperCase(message = "", messageKey = "", groups = [])`
+- `@Contains(value = "", message = "", messageKey = "", groups = [])`
+- `@StartsWith(value = "", message = "", messageKey = "", groups = [])`
+- `@EndsWith(value = "", message = "", messageKey = "", groups = [])`
+
+### Numeric Constraints
+- `@Min(value = 0L, message = "", messageKey = "", groups = [])`
+- `@Max(value = 100L, message = "", messageKey = "", groups = [])`
+- `@Range(min = 0L, max = 100L, message = "", messageKey = "", groups = [])`
+- `@Positive(message = "", messageKey = "", groups = [])`
+- `@PositiveOrZero(message = "", messageKey = "", groups = [])`
+- `@Negative(message = "", messageKey = "", groups = [])`
+- `@NegativeOrZero(message = "", messageKey = "", groups = [])`
+
+### Security & Logic Annotations
+- `@Sensitive(mask = "********")`
+- `@ValidateIf(field = "siblingField", equals = "expectedValue")`
+- `@Valid`: Enables recursive nested object and collection item validation.
+
+---
+
+## Framework Integration Code Patterns
+
+### 1. Spring Boot Controller Integration
+```kotlin
+@RestController
+@RequestMapping("/api/users")
+class UserController {
+
+    @PostMapping
+    fun createUser(@ValidValix @RequestBody user: CreateUserRequest): ResponseEntity<UserResponse> {
+        return ResponseEntity.ok(userService.create(user))
+    }
+}
+```
+
+### 2. Ktor Pipeline Interceptor
+```kotlin
+install(ValixKtorPlugin) {
+    onValidationError { call, errors ->
+        call.respond(HttpStatusCode.BadRequest, mapOf("errors" to errors))
+    }
+}
+```
+
+### 3. Jetpack Compose UI Form State
+```kotlin
+@Composable
+fun RegistrationScreen() {
+    val formState = rememberValixForm(initialValue = RegisterForm("", ""))
+
+    ValidatedTextField(
+        value = formState.value.email,
+        onValueChange = { formState.update { copy(email = it) } },
+        error = formState.getFieldError("email")
+    )
+}
+```
