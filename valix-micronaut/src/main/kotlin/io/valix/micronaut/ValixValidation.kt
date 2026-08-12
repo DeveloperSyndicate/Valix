@@ -9,6 +9,9 @@ import io.valix.localization.resolveMessages
 import jakarta.inject.Singleton
 import kotlin.reflect.KClass
 
+/**
+ * Triggers Valix validation on method parameters for annotated Micronaut beans or controllers.
+ */
 @Around
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
@@ -16,6 +19,7 @@ annotation class ValixValidated(
     val groups: Array<KClass<*>> = []
 )
 
+/** Reflection bridge locating compiled `ValixRegistry` for dynamic framework dispatch. */
 object ValixFrameworkValidator {
     private val validateFunction: (Any, Array<out KClass<*>>) -> ValidationResult = run {
         try {
@@ -31,13 +35,16 @@ object ValixFrameworkValidator {
         }
     }
 
+    /** Validates parameter [value] against compiled Valix rules. */
     fun validate(value: Any, vararg groups: KClass<*>): ValidationResult {
         return validateFunction(value, groups)
     }
 }
 
+/** Exception thrown when Micronaut method parameter validation fails. */
 class ValixMicronautValidationException(val validationResult: ValidationResult) : RuntimeException("Validation failed: ${validationResult.errors.joinToString { it.message }}")
 
+/** AOP Method Interceptor enforcing [ValixValidated] constraints on Micronaut controller method parameters. */
 @Singleton
 @InterceptorBean(ValixValidated::class)
 class ValixInterceptor : MethodInterceptor<Any, Any> {
