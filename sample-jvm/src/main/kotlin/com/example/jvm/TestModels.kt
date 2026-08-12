@@ -159,4 +159,24 @@ data class RegisterForm(
     val confirmPassword: String
 )
 
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validator = AsyncHandleValidator::class)
+annotation class UniqueHandle(
+    val message: String = "handle already taken",
+    val groups: Array<kotlin.reflect.KClass<*>> = []
+)
+
+class AsyncHandleValidator : io.valix.runtime.AsyncConstraintValidator<String> {
+    override suspend fun validate(value: String, context: ValidationContext): Boolean {
+        kotlinx.coroutines.delay(10)
+        return value != "taken_handle"
+    }
+}
+
+data class ProfileHandle(
+    @UniqueHandle
+    val handle: String
+)
+
 

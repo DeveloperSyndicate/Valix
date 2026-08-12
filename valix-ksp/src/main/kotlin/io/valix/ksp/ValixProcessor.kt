@@ -134,6 +134,7 @@ class ValixProcessor(
             .addParameter(
                 ParameterSpec.builder("groups", kclassType, KModifier.VARARG).build()
             )
+            .addParameter(ParameterSpec.builder("failFast", Boolean::class).build())
             .returns(ClassName("io.valix.core", "ValidationResult"))
 
         validateFun.addStatement("val errors = mutableListOf<%T>()", ClassName("io.valix.core", "ValidationError"))
@@ -147,7 +148,7 @@ class ValixProcessor(
                 PluginRegistry.getGenerator(fqName)
             }
 
-            if (generator != null) {
+            if (generator != null && !desc.isAsync) {
                 if (!generator.validate(classDecl, desc.annotation, logger)) {
                     continue
                 }
@@ -185,6 +186,7 @@ class ValixProcessor(
                     ClassName("io.valix.core", "ValidationError"),
                     errorField, generator.errorCode, finalMsg, resolvedMessageKey, rejectedValueExpr, fqName, errorField
                 )
+                validateFun.addStatement("if (failFast) return %T(false, errors)", ClassName("io.valix.core", "ValidationResult"))
                 validateFun.endControlFlow()
                 validateFun.endControlFlow()
             }
@@ -210,6 +212,7 @@ class ValixProcessor(
 
             // Run constraint descriptors validations and code generation
             for (desc in descriptors) {
+                if (desc.isAsync) continue
                 val fqName = desc.annotationFqName
                 val generator = if (desc.validatorFqName != null) {
                     CustomValidatorGenerator
@@ -255,6 +258,7 @@ class ValixProcessor(
                         ClassName("io.valix.core", "ValidationError"),
                         errorField, generator.errorCode, finalMsg, resolvedMessageKey, rejectedValueExpr, fqName, errorField
                     )
+                    checksBuilder.addStatement("if (failFast) return %T(false, errors)", ClassName("io.valix.core", "ValidationResult"))
                     checksBuilder.endControlFlow()
                     checksBuilder.endControlFlow()
                 }
@@ -366,6 +370,78 @@ class ValixProcessor(
 
         validatorObject.addFunction(validateFun.build())
 
+        // Generate validateAsync for suspending / async validation rules
+        val hasAsync = classDescriptors.any { it.isAsync } || propertyDescriptors.values.flatten().any { it.isAsync }
+        val validateAsyncFun = FunSpec.builder("validateAsync")
+            .addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
+            .addParameter("value", classDecl.toClassName())
+            .addParameter(
+                ParameterSpec.builder("groups", kclassType, KModifier.VARARG).build()
+            )
+            .addParameter(ParameterSpec.builder("failFast", Boolean::class).build())
+            .returns(ClassName("io.valix.core", "ValidationResult"))
+
+        if (!hasAsync) {
+            validateAsyncFun.addStatement("return validate(value, *groups, failFast = failFast)")
+        } else {
+            validateAsyncFun.addStatement("val syncResult = validate(value, *groups, failFast = failFast)")
+            validateAsyncFun.beginControlFlow("if (failFast && !syncResult.valid)")
+            validateAsyncFun.addStatement("return syncResult")
+            validateAsyncFun.endControlFlow()
+            validateAsyncFun.addStatement("val errors = syncResult.errors.toMutableList()")
+
+            // Generate async property checks
+            for ((property, descriptors) in propertyDescriptors) {
+                val asyncDescs = descriptors.filter { it.isAsync }
+                if (asyncDescs.isEmpty()) continue
+
+                val propName = property.simpleName.asString()
+                val valName = "${propName}Val"
+                validateAsyncFun.addStatement("val %L = value.%L", valName, propName)
+
+                for (desc in asyncDescs) {
+                    val validatorFqName = desc.validatorFqName ?: continue
+                    val validatorCN = ClassName.bestGuess(validatorFqName)
+                    val validatorInstanceName = "${propName}${validatorCN.simpleName}Instance"
+
+                    if (validatorObject.propertySpecs.none { it.name == validatorInstanceName }) {
+                        validatorObject.addProperty(
+                            PropertySpec.builder(validatorInstanceName, validatorCN)
+                                .addModifiers(KModifier.PRIVATE)
+                                .initializer("%T()", validatorCN)
+                                .build()
+                        )
+                    }
+
+                    val groupCheck = if (desc.groups.isEmpty()) {
+                        CodeBlock.of("groups.isEmpty()")
+                    } else {
+                        val groupMatch = desc.groups.map { CodeBlock.of("it == %T::class", ClassName.bestGuess(it)) }.joinToCode(" || ")
+                        CodeBlock.of("groups.isEmpty() || groups.any { %L }", groupMatch)
+                    }
+
+                    val finalMsg = if (desc.message.isNotEmpty()) desc.message else "async constraint failed"
+                    val resolvedMessageKey = desc.messageKey.ifEmpty { "valix.async" }
+
+                    validateAsyncFun.beginControlFlow("if (%L && %L != null)", groupCheck, valName)
+                    validateAsyncFun.addStatement("val context = object : %T { override val fieldName = %S; override val path = %S; override val rootObject = value; override val groups = groups }", ClassName("io.valix.core", "ValidationContext"), propName, propName)
+                    validateAsyncFun.beginControlFlow("if (!%L.validate(%L, context))", validatorInstanceName, valName)
+                    validateAsyncFun.addStatement(
+                        "errors.add(%T(field = %S, code = %S, message = %S, messageKey = %S, rejectedValue = %L, constraint = %S, path = %S))",
+                        ClassName("io.valix.core", "ValidationError"),
+                        propName, "ASYNC_INVALID", finalMsg, resolvedMessageKey, valName, desc.annotationFqName, propName
+                    )
+                    validateAsyncFun.addStatement("if (failFast) return %T(false, errors)", ClassName("io.valix.core", "ValidationResult"))
+                    validateAsyncFun.endControlFlow()
+                    validateAsyncFun.endControlFlow()
+                }
+            }
+
+            validateAsyncFun.addStatement("return %T(errors.isEmpty(), errors)", ClassName("io.valix.core", "ValidationResult"))
+        }
+
+        validatorObject.addFunction(validateAsyncFun.build())
+
         val originatingFiles = classDecl.containingFile?.let { arrayOf(it) } ?: emptyArray()
         val dependencies = Dependencies(aggregating = false, *originatingFiles)
 
@@ -382,8 +458,9 @@ class ValixProcessor(
             .addParameter(
                 ParameterSpec.builder("groups", kclassType, KModifier.VARARG).build()
             )
+            .addParameter(ParameterSpec.builder("failFast", Boolean::class).defaultValue("false").build())
             .returns(ClassName("io.valix.core", "ValidationResult"))
-            .addStatement("return %T.validate(value, *groups)", ClassName(generatedPackageName, validatorName))
+            .addStatement("return %T.validate(value, *groups, failFast = failFast)", ClassName(generatedPackageName, validatorName))
             .build()
 
         valixValidatorObject.addFunction(valixValidateFun)
@@ -403,7 +480,7 @@ class ValixProcessor(
         val kclassCN = ClassName("kotlin.reflect", "KClass").parameterizedBy(WildcardTypeName.producerOf(ANY))
         val arrayKclass = ClassName("kotlin", "Array").parameterizedBy(WildcardTypeName.producerOf(kclassCN))
         val lambdaCN = LambdaTypeName.get(
-            parameters = listOf(ANY, arrayKclass).map { ParameterSpec.unnamed(it) },
+            parameters = listOf(ANY, arrayKclass, com.squareup.kotlinpoet.BOOLEAN).map { ParameterSpec.unnamed(it) },
             returnType = ClassName("io.valix.core", "ValidationResult")
         )
         val mapCN = ClassName("kotlin.collections", "Map").parameterizedBy(kclassCN, lambdaCN)
@@ -416,7 +493,7 @@ class ValixProcessor(
             val validatorCN = ClassName("${clazz.packageName.asString()}.generated", "${clazz.simpleName.asString()}Validator")
 
             mapInitializer.add(
-                "  %T::class to { value, groups -> (value as %T); %T.validate(value, *groups) }",
+                "  %T::class to { value, groups, failFast -> (value as %T); %T.validate(value, *groups, failFast = failFast) }",
                 classCN, classCN, validatorCN
             )
             if (i < classes.size - 1) {
@@ -445,9 +522,10 @@ class ValixProcessor(
             .addParameter(
                 ParameterSpec.builder("groups", kclassCN, KModifier.VARARG).build()
             )
+            .addParameter(ParameterSpec.builder("failFast", Boolean::class).defaultValue("false").build())
             .returns(ClassName("io.valix.core", "ValidationResult"))
             .addStatement("val validator = validators[value::class] ?: return %T(true, emptyList())", ClassName("io.valix.core", "ValidationResult"))
-            .addStatement("return validator(value, groups)")
+            .addStatement("return validator(value, groups, failFast)")
             .build()
 
         registryObject.addFunction(validateFun)

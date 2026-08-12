@@ -12,7 +12,8 @@ object ConstraintResolver {
 
     data class ValidatorInterfaceInfo(
         val isObjectValidator: Boolean,
-        val expectedType: KSType
+        val expectedType: KSType,
+        val isAsync: Boolean = false
     )
 
     private fun findValidatorInterface(classDecl: KSClassDeclaration): ValidatorInterfaceInfo? {
@@ -23,12 +24,17 @@ object ConstraintResolver {
             if (qName == "io.valix.core.ConstraintValidator") {
                 val expected = superType.arguments.firstOrNull()?.type?.resolve()
                 if (expected != null) {
-                    return ValidatorInterfaceInfo(isObjectValidator = false, expectedType = expected)
+                    return ValidatorInterfaceInfo(isObjectValidator = false, expectedType = expected, isAsync = false)
                 }
             } else if (qName == "io.valix.core.ObjectConstraintValidator") {
                 val expected = superType.arguments.firstOrNull()?.type?.resolve()
                 if (expected != null) {
-                    return ValidatorInterfaceInfo(isObjectValidator = true, expectedType = expected)
+                    return ValidatorInterfaceInfo(isObjectValidator = true, expectedType = expected, isAsync = false)
+                }
+            } else if (qName == "io.valix.runtime.AsyncConstraintValidator") {
+                val expected = superType.arguments.firstOrNull()?.type?.resolve()
+                if (expected != null) {
+                    return ValidatorInterfaceInfo(isObjectValidator = false, expectedType = expected, isAsync = true)
                 }
             } else {
                 val nested = findValidatorInterface(decl)
@@ -87,6 +93,7 @@ object ConstraintResolver {
                 it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Constraint"
             }
 
+            var isAsyncConstraint = false
             val validatorFqName = if (constraintAnn != null) {
                 val validatorType = constraintAnn.arguments.firstOrNull { it.name?.asString() == "validator" }?.value as? KSType
                 validatorType?.declaration?.qualifiedName?.asString()
@@ -104,9 +111,10 @@ object ConstraintResolver {
 
                 val interfaceInfo = findValidatorInterface(validatorClassDecl)
                 if (interfaceInfo == null) {
-                    logger.error("Validator class '$validatorFqName' must implement ConstraintValidator or ObjectConstraintValidator", errorNode)
+                    logger.error("Validator class '$validatorFqName' must implement ConstraintValidator, ObjectConstraintValidator, or AsyncConstraintValidator", errorNode)
                     continue
                 }
+                isAsyncConstraint = interfaceInfo.isAsync
 
                 if (interfaceInfo.isObjectValidator && !isObjectLevel) {
                     logger.error("Object-level validator '$validatorFqName' cannot be applied to a property", errorNode)
@@ -173,7 +181,8 @@ object ConstraintResolver {
                         groups = groups,
                         targetType = targetType,
                         annotation = ann,
-                        isObjectLevel = isObjectLevel
+                        isObjectLevel = isObjectLevel,
+                        isAsync = isAsyncConstraint
                     )
                 )
             }

@@ -14,6 +14,7 @@ import com.google.devtools.ksp.symbol.KSType
  * @property targetType Target Kotlin property type symbol.
  * @property annotation Underlying KSP annotation symbol.
  * @property isObjectLevel `true` if attached at class/object level; `false` if property level.
+ * @property isAsync `true` if the validator implements [io.valix.runtime.AsyncConstraintValidator].
  */
 data class ConstraintDescriptor(
     val annotationFqName: String,
@@ -23,5 +24,6 @@ data class ConstraintDescriptor(
     val groups: List<String>,
     val targetType: KSType,
     val annotation: KSAnnotation,
-    val isObjectLevel: Boolean = false
+    val isObjectLevel: Boolean = false,
+    val isAsync: Boolean = false
 )

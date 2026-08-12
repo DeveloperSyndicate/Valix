@@ -15,11 +15,13 @@ import kotlin.reflect.KClass
  * @param initialValue The starting value of the form.
  * @param validator The [ValixValidator] compiled instance used to validate form data.
  * @param validationMode Strategy determining when validation is triggered ([ValidationMode.OnChange], [ValidationMode.OnBlur], etc.).
+ * @param failFast If `true`, validation terminates immediately upon encountering the first error.
  */
 class FormState<T>(
     initialValue: T,
     val validator: ValixValidator<T>,
-    val validationMode: ValidationMode = ValidationMode.OnChange
+    val validationMode: ValidationMode = ValidationMode.OnChange,
+    val failFast: Boolean = false
 ) {
     /** The current value instance. */
     var value: T = initialValue
@@ -86,7 +88,7 @@ class FormState<T>(
 
     /** Manually triggers validation for the specified groups. */
     fun validate(vararg groups: KClass<*>): ValidationResult {
-        validationResult = validator.validate(value, *groups)
+        validationResult = validator.validate(value, *groups, failFast = failFast)
         return validationResult
     }
 

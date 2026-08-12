@@ -659,5 +659,39 @@ class ValidationTest {
         assertEquals("username", enriched.original.serialName)
         assertEquals(metadata.fields.find { it.name == "email" }, enriched.getFieldMetadata("email"))
     }
+
+    @Test
+    fun testFailFastValidation() {
+        val invalidUser = TestUser(
+            username = "",
+            displayName = "",
+            email = "invalid-email",
+            shortCode = "12",
+            longCode = "12",
+            numericCode = "abc"
+        )
+
+        val fullResult = TestUserValidator.validate(invalidUser, failFast = false)
+        assertFalse(fullResult.valid)
+        assertTrue(fullResult.errors.size > 1)
+
+        val failFastResult = TestUserValidator.validate(invalidUser, failFast = true)
+        assertFalse(failFastResult.valid)
+        assertEquals(1, failFastResult.errors.size)
+    }
+
+    @Test
+    fun testAsyncValidation() = kotlinx.coroutines.runBlocking {
+        val validProfile = ProfileHandle(handle = "unique_handle")
+        val validResult = ProfileHandleValidator.validateAsync(validProfile)
+        assertTrue(validResult.valid)
+
+        val invalidProfile = ProfileHandle(handle = "taken_handle")
+        val invalidResult = ProfileHandleValidator.validateAsync(invalidProfile)
+        assertFalse(invalidResult.valid)
+        assertEquals(1, invalidResult.errors.size)
+        assertEquals("handle", invalidResult.errors[0].field)
+        assertEquals("handle already taken", invalidResult.errors[0].message)
+    }
 }
 
