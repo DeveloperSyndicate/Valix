@@ -1,84 +1,163 @@
-# Valix Complete API Reference for LLM Context Prompting
+# Valix Complete API & Context Reference for LLM Prompting
 
-## Maven / Gradle Coordinates (Version 1.0.2)
+> This file contains the complete, unabridged technical reference of Valix v1.0.2 for ingestion into Large Language Models (LLMs) such as Claude, GPT-4, Gemini, and Cursor/Antigravity coding assistants.
+
+---
+
+## 1. Executive Summary & Core Rules
+
+- **Library Group**: `com.developersyndicate.valix`
+- **Current Version**: `1.0.2`
+- **Primary Paradigm**: KSP-generated procedural Kotlin validation (Zero Reflection).
+- **Execution Target**: Kotlin Multiplatform (`commonMain`, JVM, Android, iOS, Web/JS, WebAssembly/Wasm).
+- **Codegen Rule**: Any class containing constraint annotations or `@Valid` triggers KSP generation of `<ClassName>Validator` inside `<packageName>.generated`.
+- **Primary Method Signature**:
+  `validate(value: T, vararg groups: KClass<*>, failFast: Boolean = false): ValidationResult`
+  `suspend validateAsync(value: T, vararg groups: KClass<*>, failFast: Boolean = false): ValidationResult`
+
+---
+
+## 2. Complete Dependency Import Coordinates
 
 ```kotlin
 plugins {
-    kotlin("jvm") version "2.3.21"
+    kotlin("multiplatform") version "2.3.21" // Or kotlin("jvm") / kotlin("android")
     id("com.google.devtools.ksp") version "2.3.9"
 }
 
 dependencies {
+    // Core & Runtime (KMP Compatible)
     implementation("com.developersyndicate.valix:valix-core:1.0.2")
     implementation("com.developersyndicate.valix:valix-runtime:1.0.2")
     ksp("com.developersyndicate.valix:valix-ksp:1.0.2")
 
-    // Ecosystem Adapters
-    implementation("com.developersyndicate.valix:valix-spring:1.0.2")
-    implementation("com.developersyndicate.valix:valix-ktor:1.0.2")
-    implementation("com.developersyndicate.valix:valix-micronaut:1.0.2")
-    implementation("com.developersyndicate.valix:valix-compose:1.0.2")
-    implementation("com.developersyndicate.valix:valix-flow:1.0.2")
-    implementation("com.developersyndicate.valix:valix-viewmodel:1.0.2")
-    implementation("com.developersyndicate.valix:valix-schema:1.0.2")
-    implementation("com.developersyndicate.valix:valix-serialization:1.0.2")
+    // Ecosystem Framework Adapters
+    implementation("com.developersyndicate.valix:valix-spring:1.0.2")       // Spring Boot AutoConfig & @ValidValix
+    implementation("com.developersyndicate.valix:valix-ktor:1.0.2")         // Ktor Application Plugin
+    implementation("com.developersyndicate.valix:valix-micronaut:1.0.2")    // Micronaut @ValixValidated Interceptor
+    implementation("com.developersyndicate.valix:valix-compose:1.0.2")      // Jetpack Compose rememberValixForm
+    implementation("com.developersyndicate.valix:valix-flow:1.0.2")         // Coroutines Flow validateWith
+    implementation("com.developersyndicate.valix:valix-viewmodel:1.0.2")    // ValixFormViewModel
+    implementation("com.developersyndicate.valix:valix-schema:1.0.2")       // JSON Schema & OpenAPI 3.1 Exporter
+    implementation("com.developersyndicate.valix:valix-serialization:1.0.2") // kotlinx.serialization Bridge
+    implementation("com.developersyndicate.valix:valix-localization:1.0.2")  // Properties ResourceBundle i18n
 }
 ```
 
 ---
 
-## Complete Annotation Catalogue & Parameters
+## 3. Exhaustive Annotation Catalogue
 
 ### String Constraints (`io.valix.annotations.*`)
-- `@NotNull(message = "", messageKey = "", groups = [])`
-- `@NotBlank(message = "", messageKey = "", groups = [])`
-- `@NotEmpty(message = "", messageKey = "", groups = [])`
-- `@Email(message = "", messageKey = "", groups = [])`
-- `@MinLength(value = 0, message = "", messageKey = "", groups = [])`
-- `@MaxLength(value = 255, message = "", messageKey = "", groups = [])`
-- `@Pattern(regex = "", message = "", messageKey = "", groups = [])`
-- `@Url(message = "", messageKey = "", groups = [])`
-- `@PhoneNumber(message = "", messageKey = "", groups = [])`
-- `@Alpha(message = "", messageKey = "", groups = [])`
-- `@AlphaNumeric(message = "", messageKey = "", groups = [])`
-- `@LowerCase(message = "", messageKey = "", groups = [])`
-- `@UpperCase(message = "", messageKey = "", groups = [])`
-- `@Contains(value = "", message = "", messageKey = "", groups = [])`
-- `@StartsWith(value = "", message = "", messageKey = "", groups = [])`
-- `@EndsWith(value = "", message = "", messageKey = "", groups = [])`
+- `@NotNull(message = "", messageKey = "", groups = [])`: Value must not be `null`.
+- `@NotBlank(message = "", messageKey = "", groups = [])`: String must contain non-whitespace characters.
+- `@NotEmpty(message = "", messageKey = "", groups = [])`: String length > 0.
+- `@Email(message = "", messageKey = "", groups = [])`: RFC-compliant email string.
+- `@MinLength(value: Int, message = "", messageKey = "", groups = [])`: Minimum string length.
+- `@MaxLength(value: Int, message = "", messageKey = "", groups = [])`: Maximum string length.
+- `@Pattern(regex: String, message = "", messageKey = "", groups = [])`: Regex match.
+- `@Url(message = "", messageKey = "", groups = [])`: Valid URL format.
+- `@PhoneNumber(message = "", messageKey = "", groups = [])`: E.164 phone format.
+- `@Alpha(message = "", messageKey = "", groups = [])`: Letters only.
+- `@AlphaNumeric(message = "", messageKey = "", groups = [])`: Letters and digits only.
+- `@LowerCase(message = "", messageKey = "", groups = [])`: All lowercase.
+- `@UpperCase(message = "", messageKey = "", groups = [])`: All uppercase.
+- `@Contains(value: String, message = "", messageKey = "", groups = [])`: Must contain substring.
+- `@StartsWith(value: String, message = "", messageKey = "", groups = [])`: Must start with prefix.
+- `@EndsWith(value: String, message = "", messageKey = "", groups = [])`: Must end with suffix.
 
-### Numeric Constraints
-- `@Min(value = 0L, message = "", messageKey = "", groups = [])`
-- `@Max(value = 100L, message = "", messageKey = "", groups = [])`
-- `@Range(min = 0L, max = 100L, message = "", messageKey = "", groups = [])`
-- `@Positive(message = "", messageKey = "", groups = [])`
-- `@PositiveOrZero(message = "", messageKey = "", groups = [])`
-- `@Negative(message = "", messageKey = "", groups = [])`
-- `@NegativeOrZero(message = "", messageKey = "", groups = [])`
+### Numeric Constraints (`Int`, `Long`, `Float`, `Double`, `Short`, `Byte`)
+- `@Min(value: Long, message = "", messageKey = "", groups = [])`: Value >= min.
+- `@Max(value: Long, message = "", messageKey = "", groups = [])`: Value <= max.
+- `@Range(min: Long, max: Long, message = "", messageKey = "", groups = [])`: Min <= Value <= Max.
+- `@Positive(message = "", messageKey = "", groups = [])`: Value > 0.
+- `@PositiveOrZero(message = "", messageKey = "", groups = [])`: Value >= 0.
+- `@Negative(message = "", messageKey = "", groups = [])`: Value < 0.
+- `@NegativeOrZero(message = "", messageKey = "", groups = [])`: Value <= 0.
 
-### Security & Logic Annotations
-- `@Sensitive(mask = "********")`
-- `@ValidateIf(field = "siblingField", equals = "expectedValue")`
-- `@Valid`: Enables recursive nested object and collection item validation.
+### Collection & Enum Constraints
+- `@NotEmpty(message = "", messageKey = "", groups = [])`: Collection size > 0.
+- `@Size(min: Int, max: Int, message = "", messageKey = "", groups = [])`: Collection size in range.
+- `@AllowedValues(value: Array<String>, message = "", messageKey = "", groups = [])`: Must match set.
+
+### Date & Time Constraints
+- `@Past`: Date/time strictly before current moment.
+- `@PastOrPresent`: Date/time before or equal to current moment.
+- `@Future`: Date/time strictly after current moment.
+- `@FutureOrPresent`: Date/time after or equal to current moment.
+
+### Security, Conditional & Nested Control
+- `@Sensitive(mask: String = "********")`: Redacts `rejectedValue` in generated `ValidationError`.
+- `@ValidateIf(field: String, equals: String = "")`: Evaluates constraints only if target sibling property matches condition.
+- `@Valid`: Recursively validates nested objects or collection items.
+- `@FieldsMatch(first: String, second: String, message: String = "")`: Class-level check for matching fields.
 
 ---
 
-## Framework Integration Code Patterns
+## 4. Custom Validator Interfaces
 
-### 1. Spring Boot Controller Integration
+### Property-Level Sync Validator
 ```kotlin
-@RestController
-@RequestMapping("/api/users")
-class UserController {
-
-    @PostMapping
-    fun createUser(@ValidValix @RequestBody user: CreateUserRequest): ResponseEntity<UserResponse> {
-        return ResponseEntity.ok(userService.create(user))
+class ZipCodeValidator : ConstraintValidator<String> {
+    override fun validate(value: String, context: ValidationContext): Boolean {
+        return value.matches(Regex("^\\d{5}(-\\d{4})?$"))
     }
 }
 ```
 
-### 2. Ktor Pipeline Interceptor
+### Property-Level Suspending / Async Validator
+```kotlin
+class UniqueUsernameValidator : AsyncConstraintValidator<String> {
+    override suspend fun validate(value: String, context: ValidationContext): Boolean {
+        return userRepository.existsByUsername(value).not()
+    }
+}
+```
+
+### Class-Level Multi-Field Validator
+```kotlin
+class DateRangeValidator : ObjectConstraintValidator<Event> {
+    override fun validate(value: Event, context: ValidationContext): Boolean {
+        return value.endDate.isAfter(value.startDate)
+    }
+}
+```
+
+---
+
+## 5. Programmatic Builder DSL (`valixDsl`)
+
+```kotlin
+val ThirdPartyUserValidator = valixDsl<ThirdPartyUser> {
+    field("name", ThirdPartyUser::name) {
+        notBlank()
+    }
+    field("email", ThirdPartyUser::email) {
+        email()
+    }
+    field("age", ThirdPartyUser::age) {
+        min(18)
+    }
+}
+```
+
+---
+
+## 6. Complete Framework Code Examples
+
+### Spring Boot
+```kotlin
+@RestController
+@RequestMapping("/api/users")
+class UserController {
+    @PostMapping
+    fun createUser(@ValidValix @RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
+        return ResponseEntity.ok(userService.create(request))
+    }
+}
+```
+
+### Ktor
 ```kotlin
 install(ValixKtorPlugin) {
     onValidationError { call, errors ->
@@ -87,16 +166,13 @@ install(ValixKtorPlugin) {
 }
 ```
 
-### 3. Jetpack Compose UI Form State
+### Jetpack Compose
 ```kotlin
-@Composable
-fun RegistrationScreen() {
-    val formState = rememberValixForm(initialValue = RegisterForm("", ""))
-
-    ValidatedTextField(
-        value = formState.value.email,
-        onValueChange = { formState.update { copy(email = it) } },
-        error = formState.getFieldError("email")
-    )
-}
+val formState = rememberValixForm(initialValue = RegisterForm("", ""))
+OutlinedTextField(
+    value = formState.value.email,
+    onValueChange = { email -> formState.update { copy(email = email) } },
+    isError = formState.hasFieldError("email")
+)
 ```
+
