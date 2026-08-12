@@ -8,6 +8,7 @@ import io.valix.core.ValidationResult
 import io.valix.localization.resolveMessages
 import kotlin.reflect.KClass
 
+/** Reflection bridge locating compiled `ValixRegistry` for dynamic framework dispatch. */
 object ValixFrameworkValidator {
     private val validateFunction: (Any, Array<out KClass<*>>) -> ValidationResult = run {
         try {
@@ -23,15 +24,21 @@ object ValixFrameworkValidator {
         }
     }
 
+    /** Validates generic request payload [value] against compiled Valix rules. */
     fun validate(value: Any, vararg groups: KClass<*>): ValidationResult {
         return validateFunction(value, groups)
     }
 }
 
+/** Exception thrown when Ktor request payload validation fails. */
 class ValixKtorValidationException(val validationResult: ValidationResult) : RuntimeException("Validation failed: ${validationResult.errors.joinToString { it.message }}")
 
+/** Configuration class for Ktor [ValixValidation] plugin. */
 class ValixKtorConfiguration {
+    /** Default validation groups. */
     var defaultGroups: List<KClass<*>> = emptyList()
+
+    /** Custom error response handler block. */
     var errorHandler: suspend (ApplicationCall, ValidationResult) -> Unit = { call, result ->
         call.respond(HttpStatusCode.BadRequest, mapOf(
             "status" to HttpStatusCode.BadRequest.value,
@@ -50,6 +57,7 @@ class ValixKtorConfiguration {
     }
 }
 
+/** Ktor Server Application Plugin intercepting incoming request bodies for Valix validation. */
 val ValixValidation = createApplicationPlugin(
     name = "ValixValidation",
     createConfiguration = ::ValixKtorConfiguration

@@ -7,6 +7,11 @@ import java.util.Locale
 import java.util.ResourceBundle
 import java.util.MissingResourceException
 
+/**
+ * [MessageResolver] resolving error message keys from `ResourceBundle` `.properties` bundles.
+ *
+ * @param baseName Resource bundle base name (defaults to `"valix-messages"`).
+ */
 class PropertiesMessageResolver(
     private val baseName: String = "valix-messages"
 ) : MessageResolver {
@@ -40,6 +45,13 @@ class PropertiesMessageResolver(
     }
 }
 
+/**
+ * Extension method resolving message keys for all [ValidationError]s within a [ValidationResult].
+ *
+ * @param locale Target locale for resource bundle lookup (defaults to [ValixConfig.defaultLocale]).
+ * @param resolver Active [MessageResolver] implementation.
+ * @return New [ValidationResult] with localized message strings.
+ */
 fun ValidationResult.resolveMessages(
     locale: Locale = ValixConfig.defaultLocale,
     resolver: MessageResolver = ValixConfig.messageResolver

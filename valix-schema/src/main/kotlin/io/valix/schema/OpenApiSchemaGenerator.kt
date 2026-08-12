@@ -5,8 +5,17 @@ import io.valix.metadata.FieldMetadata
 import io.valix.metadata.ConstraintMetadata
 import io.valix.metadata.SchemaKeyword
 
+/**
+ * Generator producing OpenAPI 3.1 YAML component definition blocks from [ValixModelMetadata].
+ */
 object OpenApiSchemaGenerator {
 
+    /**
+     * Generates OpenAPI 3.1 YAML schema component string for target [metadata].
+     *
+     * @param metadata Model validation metadata.
+     * @return Formatted OpenAPI YAML component string.
+     */
     fun generateComponent(metadata: ValixModelMetadata): String {
         val sb = StringBuilder()
         sb.append("${metadata.modelSimpleName}:\n")

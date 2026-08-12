@@ -5,6 +5,11 @@ import io.valix.metadata.FieldMetadata
 import io.valix.metadata.ConstraintMetadata
 import kotlinx.serialization.descriptors.SerialDescriptor
 
+/**
+ * Serializes a [ValixModelMetadata] descriptor into a formatted JSON string representation.
+ *
+ * @return JSON string encoding of the model metadata.
+ */
 fun ValixModelMetadata.toJson(): String {
     val sb = StringBuilder()
     sb.append("{\n")
@@ -88,16 +93,26 @@ private fun escapeJson(str: String): String {
     return str.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
 }
 
+/**
+ * Wrapper for [SerialDescriptor] attaching Valix model metadata.
+ *
+ * @property original Underlying kotlinx.serialization [SerialDescriptor].
+ * @property metadata Associated [ValixModelMetadata].
+ */
 class EnrichedDescriptor(
     val original: SerialDescriptor,
     val metadata: ValixModelMetadata
 ) : SerialDescriptor by original {
     
+    /** Returns field metadata matching property [name], or `null`. */
     fun getFieldMetadata(name: String): FieldMetadata? {
         return metadata.fields.find { it.name == name }
     }
 }
 
+/**
+ * Extension wrapping a kotlinx.serialization [SerialDescriptor] with Valix [metadata].
+ */
 fun SerialDescriptor.mergeValixMetadata(metadata: ValixModelMetadata): EnrichedDescriptor {
     return EnrichedDescriptor(this, metadata)
 }
