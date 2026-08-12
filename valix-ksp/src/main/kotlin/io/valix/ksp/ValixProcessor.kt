@@ -202,11 +202,39 @@ class ValixProcessor(
                 it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Valid"
             }
 
+            val sensitiveAnn = property.annotations.firstOrNull {
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Sensitive"
+            }
+            val sensitiveMask = if (sensitiveAnn != null) {
+                val maskArg = sensitiveAnn.arguments.firstOrNull { it.name?.asString() == "mask" }?.value as? String
+                maskArg ?: "********"
+            } else null
+
+            val validateIfAnn = property.annotations.firstOrNull {
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.ValidateIf"
+            }
+            val validateIfCondition = if (validateIfAnn != null) {
+                val targetField = validateIfAnn.arguments.firstOrNull { it.name?.asString() == "field" }?.value as? String ?: ""
+                val equalsVal = validateIfAnn.arguments.firstOrNull { it.name?.asString() == "equals" }?.value as? String ?: ""
+                if (targetField.isNotEmpty()) {
+                    if (equalsVal.isNotEmpty()) {
+                        CodeBlock.of("value.%L == %S", targetField, equalsVal)
+                    } else {
+                        CodeBlock.of("value.%L != null", targetField)
+                    }
+                } else null
+            } else null
+
             val isCollectionType = isCollection(type)
 
             validateFun.addComment("Validation for %L", propName)
             val valName = "${propName}Val"
             validateFun.addStatement("val %L = value.%L", valName, propName)
+
+            val propertyBlock = CodeBlock.builder()
+            if (validateIfCondition != null) {
+                propertyBlock.beginControlFlow("if (%L)", validateIfCondition)
+            }
 
             val checksBuilder = CodeBlock.builder()
 
@@ -245,7 +273,8 @@ class ValixProcessor(
                     val condition = generator.generateCondition(property, desc.annotation, valName)
 
                     val errorField = generator.getErrorField(property, desc.annotation, propName)
-                    val rejectedValueExpr = generator.getRejectedValueExpression(property, desc.annotation, valName)
+                    val rawRejectedValueExpr = generator.getRejectedValueExpression(property, desc.annotation, valName)
+                    val rejectedValueExpr = if (sensitiveMask != null) CodeBlock.of("%S", sensitiveMask) else CodeBlock.of("%L", rawRejectedValueExpr)
 
                     checksBuilder.beginControlFlow("if (%L)", groupCheck)
                     checksBuilder.beginControlFlow("if (%L)", condition)
@@ -343,27 +372,34 @@ class ValixProcessor(
                     }
                     val finalMsg = if (notNullMessage.isNotEmpty()) notNullMessage else "must not be null"
 
-                    validateFun.beginControlFlow("if (%L == null)", valName)
-                    validateFun.beginControlFlow("if (%L)", groupCheck)
+                    propertyBlock.beginControlFlow("if (%L == null)", valName)
+                    propertyBlock.beginControlFlow("if (%L)", groupCheck)
                     val resolvedMessageKey = notNullAnn!!.arguments.firstOrNull { it.name?.asString() == "messageKey" }?.value as? String ?: ""
                     val finalMessageKey = resolvedMessageKey.ifEmpty { "valix.notnull" }
-                    validateFun.addStatement(
-                        "errors.add(%T(field = %S, code = %S, message = %S, messageKey = %S, rejectedValue = null, constraint = %S, path = %S))",
+                    val rejectedValueExpr = if (sensitiveMask != null) CodeBlock.of("%S", sensitiveMask) else CodeBlock.of("null")
+                    propertyBlock.addStatement(
+                        "errors.add(%T(field = %S, code = %S, message = %S, messageKey = %S, rejectedValue = %L, constraint = %S, path = %S))",
                         ClassName("io.valix.core", "ValidationError"),
-                        propName, "NOT_NULL", finalMsg, finalMessageKey, "io.valix.annotations.NotNull", propName
+                        propName, "NOT_NULL", finalMsg, finalMessageKey, rejectedValueExpr, "io.valix.annotations.NotNull", propName
                     )
-                    validateFun.endControlFlow()
-                    validateFun.nextControlFlow("else")
-                    validateFun.addCode(checksBody)
-                    validateFun.endControlFlow()
+                    propertyBlock.endControlFlow()
+                    propertyBlock.nextControlFlow("else")
+                    propertyBlock.add(checksBody)
+                    propertyBlock.endControlFlow()
                 } else {
-                    validateFun.beginControlFlow("if (%L != null)", valName)
-                    validateFun.addCode(checksBody)
-                    validateFun.endControlFlow()
+                    propertyBlock.beginControlFlow("if (%L != null)", valName)
+                    propertyBlock.add(checksBody)
+                    propertyBlock.endControlFlow()
                 }
             } else {
-                validateFun.addCode(checksBody)
+                propertyBlock.add(checksBody)
             }
+
+            if (validateIfCondition != null) {
+                propertyBlock.endControlFlow()
+            }
+
+            validateFun.addCode(propertyBlock.build())
         }
 
         validateFun.addStatement("return %T(errors.isEmpty(), errors)", ClassName("io.valix.core", "ValidationResult"))

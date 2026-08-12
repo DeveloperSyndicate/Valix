@@ -693,5 +693,47 @@ class ValidationTest {
         assertEquals("handle", invalidResult.errors[0].field)
         assertEquals("handle already taken", invalidResult.errors[0].message)
     }
+
+    @Test
+    fun testSensitiveDataMasking() {
+        val creds = UserCredentials(username = "admin", password = "123")
+        val result = UserCredentialsValidator.validate(creds)
+        assertFalse(result.valid)
+        assertEquals(1, result.errors.size)
+        assertEquals("password", result.errors[0].field)
+        assertEquals("[REDACTED]", result.errors[0].rejectedValue)
+    }
+
+    @Test
+    fun testConditionalValidation() {
+        val cashPayment = ConditionalPayment(paymentType = "CASH", cardNumber = null)
+        val cashResult = ConditionalPaymentValidator.validate(cashPayment)
+        assertTrue(cashResult.valid)
+
+        val cardPaymentNoNumber = ConditionalPayment(paymentType = "CARD", cardNumber = "")
+        val cardResult = ConditionalPaymentValidator.validate(cardPaymentNoNumber)
+        assertFalse(cardResult.valid)
+        assertEquals(1, cardResult.errors.size)
+        assertEquals("cardNumber", cardResult.errors[0].field)
+    }
+
+    @Test
+    fun testProgrammaticValixDsl() {
+        data class ThirdPartyUser(val name: String, val age: Int)
+
+        val validator = io.valix.runtime.valixDsl<ThirdPartyUser> {
+            field("name", ThirdPartyUser::name) {
+                notBlank()
+            }
+            field("age", ThirdPartyUser::age) {
+                min(18)
+            }
+        }
+
+        val invalidUser = ThirdPartyUser(name = "", age = 15)
+        val result = validator.validate(invalidUser)
+        assertFalse(result.valid)
+        assertEquals(2, result.errors.size)
+    }
 }
 

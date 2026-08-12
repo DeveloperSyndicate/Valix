@@ -179,4 +179,20 @@ data class ProfileHandle(
     val handle: String
 )
 
+data class UserCredentials(
+    val username: String,
+
+    @Sensitive(mask = "[REDACTED]")
+    @MinLength(8)
+    val password: String
+)
+
+data class ConditionalPayment(
+    val paymentType: String?,
+
+    @ValidateIf(field = "paymentType", equals = "CARD")
+    @NotBlank(message = "Card number required")
+    val cardNumber: String?
+)
+
 
