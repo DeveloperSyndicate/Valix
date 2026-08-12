@@ -4,10 +4,17 @@ import io.valix.core.ValidationResult
 import io.valix.core.ValixValidator
 import kotlin.reflect.KClass
 
+/**
+ * Diagnostics controller for enabling validation metrics and profiling.
+ */
 object ValixDiagnostics {
+    /** Toggle metrics collection on/off. */
     var enabled: Boolean = false
+
+    /** Recorded execution metrics. */
     val metrics = ValidationMetrics()
 
+    /** Measures duration of the validation block. */
     inline fun <T> measure(validator: ValixValidator<*>, block: () -> T): T {
         if (!enabled) return block()
         val start = System.nanoTime()
@@ -20,6 +27,7 @@ object ValixDiagnostics {
     }
 }
 
+/** Total validation counts and timing metrics. */
 class ValidationMetrics {
     var totalValidations: Long = 0L
     var totalDurationNs: Long = 0L
@@ -41,6 +49,7 @@ class ValidationMetrics {
     }
 }
 
+/** Execution metrics per validator class. */
 class ConstraintExecutionStats(val name: String) {
     var count: Long = 0L
     var totalDurationNs: Long = 0L
@@ -55,6 +64,7 @@ class ConstraintExecutionStats(val name: String) {
     }
 }
 
+/** Helper extension executing validation with diagnostics timing. */
 fun <T> ValixValidator<T>.validateWithMetrics(value: T, vararg groups: KClass<*>): ValidationResult {
     return ValixDiagnostics.measure(this) {
         validate(value, *groups)
