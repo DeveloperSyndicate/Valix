@@ -1,0 +1,239 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ConstraintDescriptor</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            valix
+                    </a>            </div>
+            <div class="library-version">1.0.3
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":valix-ksp:dokkaHtmlPartial/main">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="valix-ksp::io.valix.ksp/ConstraintDescriptor///PointingToDeclaration//968683247">
+  <div class="breadcrumbs"><a href="../../index.html">valix-ksp</a><span class="delimiter">/</span><a href="../index.html">io.valix.ksp</a><span class="delimiter">/</span><span class="current">ConstraintDescriptor</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Constraint</span><wbr><span><span>Descriptor</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="index.html">ConstraintDescriptor</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>annotationFqName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>validatorFqName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>message<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>messageKey<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>groups<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>targetType<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.symbol/KSType///PointingToDeclaration/">KSType</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>annotation<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.symbol/KSAnnotation///PointingToDeclaration/">KSAnnotation</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>isObjectLevel<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>isAsync<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></span></span><span class="token punctuation">)</span></div><p class="paragraph">Symbol descriptor holding metadata for a resolved constraint annotation processed by KSP.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-1876993769%2FConstructors%2F968683247" anchor-label="ConstraintDescriptor" id="-1876993769%2FConstructors%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-constraint-descriptor.html"><span>Constraint</span><wbr><span><span>Descriptor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1876993769%2FConstructors%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">annotationFqName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">validatorFqName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">message<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">messageKey<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">groups<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">targetType<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.symbol/KSType///PointingToDeclaration/">KSType</span><span class="token punctuation">, </span></span><span class="parameter ">annotation<span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.symbol/KSAnnotation///PointingToDeclaration/">KSAnnotation</span><span class="token punctuation">, </span></span><span class="parameter ">isObjectLevel<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span><span class="token punctuation">, </span></span><span class="parameter ">isAsync<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="984452920%2FProperties%2F968683247" anchor-label="annotation" id="984452920%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="annotation.html"><span><span>annotation</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="984452920%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="annotation.html">annotation</a><span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.symbol/KSAnnotation///PointingToDeclaration/">KSAnnotation</span></div><div class="brief "><p class="paragraph">Underlying KSP annotation symbol.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1167827362%2FProperties%2F968683247" anchor-label="annotationFqName" id="1167827362%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="annotation-fq-name.html"><span>annotation</span><wbr><span>Fq</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1167827362%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="annotation-fq-name.html">annotationFqName</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Fully qualified annotation class name.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2127599309%2FProperties%2F968683247" anchor-label="groups" id="-2127599309%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="groups.html"><span><span>groups</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2127599309%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="groups.html">groups</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Active validation group qualified names.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-253081343%2FProperties%2F968683247" anchor-label="isAsync" id="-253081343%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-async.html"><span>is</span><wbr><span><span>Async</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-253081343%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="is-async.html">isAsync</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></div><div class="brief "><p class="paragraph"><code class="lang-kotlin">true</code> if the validator implements io.valix.runtime.AsyncConstraintValidator.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="816279576%2FProperties%2F968683247" anchor-label="isObjectLevel" id="816279576%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-object-level.html"><span>is</span><wbr><span>Object</span><wbr><span><span>Level</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="816279576%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="is-object-level.html">isObjectLevel</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></div><div class="brief "><p class="paragraph"><code class="lang-kotlin">true</code> if attached at class/object level; <code class="lang-kotlin">false</code> if property level.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-309569012%2FProperties%2F968683247" anchor-label="message" id="-309569012%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="message.html"><span><span>message</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-309569012%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="message.html">message</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Error message template string.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="645146031%2FProperties%2F968683247" anchor-label="messageKey" id="645146031%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="message-key.html"><span>message</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="645146031%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="message-key.html">messageKey</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Translation key string.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1458688380%2FProperties%2F968683247" anchor-label="targetType" id="1458688380%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="target-type.html"><span>target</span><wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1458688380%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="target-type.html">targetType</a><span class="token operator">: </span><span data-unresolved-link="com.google.devtools.ksp.symbol/KSType///PointingToDeclaration/">KSType</span></div><div class="brief "><p class="paragraph">Target Kotlin property type symbol.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1710873781%2FProperties%2F968683247" anchor-label="validatorFqName" id="-1710873781%2FProperties%2F968683247" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":valix-ksp:dokkaHtmlPartial/main" data-filterable-set=":valix-ksp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="validator-fq-name.html"><span>validator</span><wbr><span>Fq</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1710873781%2FProperties%2F968683247"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":valix-ksp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="validator-fq-name.html">validatorFqName</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Fully qualified custom validator class name (if applicable).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2026 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
