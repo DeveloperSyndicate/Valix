@@ -1,328 +1,270 @@
 # Valix
 
-Valix is a production-grade, compile-time validation library for Kotlin (JVM & Android), built on top of **KSP (Kotlin Symbol Processing)** and **KotlinPoet**.
+Compile-time validation for Kotlin. Zero reflection. Generated Kotlin code.
 
-Inspired by NestJS's `class-validator` and Java's Bean Validation (JSR 380), Valix focuses on delivering high-performance validations without runtime overhead.
+[![Build Status](https://github.com/developersyndicate/valix/actions/workflows/publish.yml/badge.svg)](https://github.com/developersyndicate/valix/actions/workflows/publish.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/com.developersyndicate.valix/valix-core.svg)](https://search.maven.org/artifact/com.developersyndicate.valix/valix-core)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
----
+Valix uses **Kotlin Symbol Processing (KSP)** to generate type-safe validators at compile time—delivering reflection-free validation with zero runtime overhead and zero cold-start delay.
 
-## 🚀 Key Features
-
-- **Zero Reflection**: All validators are generated as pure Kotlin code at compile time. No performance hit or startup delays.
-- **Android & JVM Friendly**: Works seamlessly on Android and JVM without requiring custom Proguard/R8 reflection rules.
-- **Strict Compile-Time Safety**: Generates clean, human-readable Kotlin code that is type-safe. Unsupported uses (e.g. `@MinLength` on `Int`) fail compilation immediately.
-- **Low Allocation Overhead**: Minimizes garbage collection allocations by using a simple procedural check sequence.
-- **Nullability Aware**: Avoids unnecessary checks and compiler warnings by treating Kotlin's nullable (`T?`) and non-nullable (`T`) types correctly.
-- **Nested Object & Collection Validation**: Validate complex nested objects and collection elements using `@Valid` with deep path and index propagation (e.g. `address.city` or `nicknames[1].name`).
-- **Validation Groups**: JSR-380 style validation groups (marker interfaces) to selectively execute validation checks.
-- **Custom Messages**: Supply custom validation error messages directly on annotations.
-- **Reflection-Free Registry**: A global generated `ValixRegistry` to validate any registered class dynamically.
-- **Fully Backward Compatible**: Keeps supporting older validation interfaces (`<ClassName>ValixValidator`).
+* **Kotlin-Native**: Built specifically for Kotlin types, nullability (`T?`), and data classes.
+* **KSP Powered**: Generates clean, human-readable procedural Kotlin code at build time.
+* **Zero Reflection**: Avoids expensive reflection calls and custom Proguard/R8 reflection rules.
+* **Multiplatform (KMP)**: Supports JVM, Android, iOS (`iosArm64`, `iosX64`, `iosSimulatorArm64`), Web (JS), and WebAssembly (Wasm).
+* **Framework Ready**: First-class integrations for Spring Boot, Ktor, Micronaut, Jetpack Compose, and Coroutines Flow.
+* **Schema Generation**: Exports OpenAPI 3.1 YAML descriptors and JSON Schema (Draft-07).
 
 ---
 
-## ⚡ JMH Benchmarking Performance
+## 30-Second Overview
 
-To measure performance, we ran rigorous microbenchmarks using JMH comparing Valix with Hibernate Validator (the Java standard JSR-380 reference engine).
-
-| Validation Case | Hibernate Validator | Valix (Ours) | Throughput Increase |
-| :--- | :--- | :--- | :--- |
-| **Invalid Data Validation** | 874,809 ops/sec | **7,866,714 ops/sec** | **~9.0x speedup** 🚀 |
-| **Valid Data Validation** | 905,822 ops/sec | **8,511,063 ops/sec** | **~9.4x speedup** 🚀 |
-
-> [!TIP]
-> Moving validation execution from runtime reflection to procedural compile-time bytecode yields ~9.4x higher throughput with zero runtime overhead or cold-start startup delay.
-
----
-
-## 🔌 Rich Ecosystem & Platform Integrations
-
-Valix is designed for enterprise architectures and integrates out-of-the-box with popular Kotlin ecosystems:
-- **Spring Boot (`valix-spring`)**: Auto-registers `SpringMessageResolver` to translate codes using native `MessageSource` localizations and handles controller input parameter validation via `@ValidValix`.
-- **Ktor (`valix-ktor`)**: A lightweight pipeline interceptor plugin that automatically validates incoming call request payloads.
-- **Micronaut (`valix-micronaut`)**: AOP advice (`@ValixValidated`) and method interceptors to validate parameters before execution.
-- **Jetpack Compose (`valix-compose`)**: Jetpack Compose state integration via `rememberValixForm()` and `ValidatedTextField`.
-- **Coroutines Flow (`valix-flow`)**: Reactive flow stream operators to validate data changes on the fly (`validateWith`).
-- **Architecture Components ViewModel (`valix-viewmodel`)**: Extends lifecycle ViewModels via `ValixFormViewModel` to bind validation state directly to the UI.
-
----
-
-## 📦 Module Structure
-
-- **`valix-core`**: The core library containing annotations, metadata descriptors, validation registry, and core models (`ValidationError`, `ValidationResult`).
-- **`valix-ksp`**: The KSP symbol processor that reads annotations, validates correctness, and generates validator code.
-- **`valix-localization`**: Properties-based internationalization (i18n) bundle resource engine.
-- **`valix-schema`**: Generates draft-07 JSON Schema and OpenAPI 3.1 YAML descriptors.
-- **`valix-serialization`**: Integrates with `kotlinx.serialization` to enrich descriptor schemas.
-- **`valix-gradle-plugin`**: Automates schema, OpenAPI YAML, and Markdown documentation generation tasks at build time.
-- **`sample-jvm`**: Demonstrates the integration and validates usage.
-- **`sample-android`**: Showcases Android module compatibility.
-
----
-
-## 🛠️ Getting Started
-
-To use Valix in your Kotlin project, apply the KSP plugin and add the Maven Central coordinates.
-
-### 1. Root Configuration (`build.gradle.kts`)
-
-```kotlin
-plugins {
-    kotlin("jvm") version "2.3.21" apply false
-    id("com.google.devtools.ksp") version "2.3.9" apply false
-}
-```
-
-### 2. Module Configuration (`build.gradle.kts`)
-
-```kotlin
-plugins {
-    kotlin("jvm")
-    id("com.google.devtools.ksp")
-}
-
-dependencies {
-    // Valix Core (includes annotations & metadata)
-    implementation("com.developersyndicate.valix:valix-core:1.0.2")
-    // KSP annotation processor
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.2")
-}
-```
-
----
-
-## 🏷️ Supported Annotations
-
-All validation constraints support:
-- `message: String = ""` to customize error messages.
-- `groups: Array<KClass<*>> = []` to specify validation groups.
-
-### String Constraints (Applicable only to `String` and `String?`)
-
-| Annotation | Description | Error Code | Default Message |
-| :--- | :--- | :--- | :--- |
-| `@NotNull` | Must not be null (only relevant for nullable types) | `NOT_NULL` | `must not be null` |
-| `@NotBlank` | Must not be empty or blank space | `NOT_BLANK` | `must not be blank` |
-| `@Email` | Must match a standard email regex | `EMAIL_INVALID` | `invalid email` |
-| `@MinLength(val)`| Minimum character length | `MIN_LENGTH` | `minimum length is X` |
-| `@MaxLength(val)`| Maximum character length | `MAX_LENGTH` | `maximum length is X` |
-| `@Pattern(regex)`| Must match the specified regular expression | `PATTERN_MISMATCH`| `pattern mismatch` |
-| `@Url` | Must be a valid URL | `URL_INVALID` | `invalid URL` |
-| `@PhoneNumber` | Must be a valid phone number | `PHONE_INVALID` | `invalid phone number` |
-| `@Alpha` | Must contain only alphabetic characters | `ALPHA_INVALID` | `must contain only alphabetic characters` |
-| `@AlphaNumeric`| Must contain only alphanumeric characters | `ALPHANUMERIC_INVALID`| `must contain only alphanumeric characters` |
-| `@LowerCase` | Must be completely lowercase | `LOWERCASE_INVALID` | `must be lowercase` |
-| `@UpperCase` | Must be completely uppercase | `UPPERCASE_INVALID` | `must be uppercase` |
-| `@Contains(val)`| Must contain the specified substring | `CONTAINS_INVALID` | `must contain 'X'` |
-| `@StartsWith(val)`| Must start with the specified prefix | `STARTS_WITH_INVALID`| `must start with 'X'` |
-| `@EndsWith(val)`| Must end with the specified suffix | `ENDS_WITH_INVALID` | `must end with 'X'` |
-
-### Numeric Constraints (Applicable to `Int`, `Long`, `Float`, `Double`, `Short` and nullable equivalents)
-
-| Annotation | Description | Error Code | Default Message |
-| :--- | :--- | :--- | :--- |
-| `@Min(val)` | Must be greater than or equal to `val` | `MIN_VALUE` | `must be at least X` |
-| `@Max(val)` | Must be less than or equal to `val` | `MAX_VALUE` | `must be at most X` |
-| `@Range(min, max)`| Must be between `min` and `max` inclusive | `RANGE_INVALID` | `must be between min and max` |
-| `@Positive` | Must be strictly greater than 0 | `POSITIVE_REQUIRED` | `must be positive` |
-| `@PositiveOrZero`| Must be greater than or equal to 0 | `POSITIVE_REQUIRED` | `must be positive or zero` |
-| `@Negative` | Must be strictly less than 0 | `NEGATIVE_REQUIRED` | `must be negative` |
-| `@NegativeOrZero`| Must be less than or equal to 0 | `NEGATIVE_REQUIRED` | `must be negative or zero` |
-
-### Collection Constraints (Applicable to `List`, `Set`, `Collection`, `Iterable` and nullable equivalents)
-
-| Annotation | Description | Error Code | Default Message |
-| :--- | :--- | :--- | :--- |
-| `@NotEmpty` | Collection must contain at least one element | `NOT_EMPTY` | `must not be empty` |
-| `@Size(min, max)`| Element count must be between `min` and `max` inclusive| `SIZE_INVALID` | `size must be between min and max` |
-
-### Enum Constraints (Applicable to Enum class properties or String properties)
-
-| Annotation | Description | Error Code | Default Message |
-| :--- | :--- | :--- | :--- |
-| `@AllowedValues(val)`| Value must match one of the specified allowed values | `INVALID_ENUM_VALUE` | `value must be one of allowed values` |
-
-### Date & Time Constraints (Applicable to `LocalDate`, `LocalDateTime`, `Instant`, `OffsetDateTime`)
-
-| Annotation | Description | Error Code | Default Message |
-| :--- | :--- | :--- | :--- |
-| `@Past` | Date/time must be strictly in the past | `PAST_REQUIRED` | `must be in the past` |
-| `@PastOrPresent`| Date/time must be in the past or present | `PAST_REQUIRED` | `must be in the past or present` |
-| `@Future` | Date/time must be strictly in the future | `FUTURE_REQUIRED` | `must be in the future` |
-| `@FutureOrPresent`| Date/time must be in the future or present | `FUTURE_REQUIRED` | `must be in the future or present` |
-
----
-
-## ⚡ Strict Compile-Time Type Safety
-
-Valix validates all annotations and their parameters during compilation. The compiler will immediately fail with a compilation error if:
-- A constraint is applied to an unsupported type (e.g. `@MinLength` on `Int` or `@Past` on `Boolean`).
-- Annotation arguments are invalid (e.g. `@Range(min = 100, max = 1)` or `@Size(min = 10, max = 2)`).
-
----
-
-## 💡 Usage Example
-
-### 1. Define your Data Classes
-
+### 1. Annotate Data Model
 ```kotlin
 package com.example.user
 
 import io.valix.annotations.*
-import java.time.LocalDate
 
-enum class UserRole {
-    ADMIN, USER
-}
+data class CreateUserRequest(
+    @NotBlank
+    val username: String,
 
-data class Profile(
-    @Url
-    val website: String?,
-
-    @Past
-    val birthDate: LocalDate?
-)
-
-data class User(
     @Email
     val email: String,
 
     @Min(18)
     val age: Int,
 
-    @AllowedValues(["ADMIN", "USER"])
-    val role: UserRole,
-
-    @NotEmpty
-    @Size(min = 1, max = 5)
-    val hobbies: List<String>?,
-
-    @Valid
-    val profile: Profile
+    @Sensitive(mask = "[REDACTED]")
+    @MinLength(8)
+    val password: String
 )
 ```
 
-### 2. Run Validation
+### 2. Execute Validation
+```kotlin
+val request = CreateUserRequest(username = "john", email = "invalid", age = 15, password = "123")
+val result = CreateUserRequestValidator.validate(request)
+
+if (!result.valid) {
+    result.errors.forEach { error ->
+        println("${error.field}: ${error.message} (Rejected: ${error.rejectedValue})")
+    }
+}
+```
+
+### 3. Generated Code Under the Hood
+KSP generates standard, human-readable Kotlin procedural code in your `build/generated/ksp/` folder:
 
 ```kotlin
-package com.example.user
+public object CreateUserRequestValidator : ValixValidator<CreateUserRequest> {
+    override fun validate(value: CreateUserRequest, vararg groups: KClass<out Any>, failFast: Boolean): ValidationResult {
+        val errors = mutableListOf<ValidationError>()
 
-import com.example.user.generated.UserValidator
-
-fun validateUser(user: User) {
-    val result = UserValidator.validate(user)
-    
-    if (result.valid) {
-        println("User is valid!")
-    } else {
-        result.errors.forEach { error ->
-            println("Field: ${error.field}, Error: ${error.message}, Rejected: ${error.rejectedValue}")
+        val usernameVal = value.username
+        if (usernameVal.trim().isEmpty()) {
+            errors.add(ValidationError(field = "username", code = "NOT_BLANK", message = "must not be blank", path = "username"))
+            if (failFast) return ValidationResult(false, errors)
         }
+
+        val emailVal = value.email
+        if (!emailVal.matches(EMAIL_REGEX)) {
+            errors.add(ValidationError(field = "email", code = "EMAIL_INVALID", message = "invalid email", path = "email"))
+            if (failFast) return ValidationResult(false, errors)
+        }
+
+        val ageVal = value.age
+        if (ageVal < 18) {
+            errors.add(ValidationError(field = "age", code = "MIN_VALUE", message = "must be at least 18", path = "age"))
+            if (failFast) return ValidationResult(false, errors)
+        }
+
+        val passwordVal = value.password
+        if (passwordVal.length < 8) {
+            errors.add(ValidationError(field = "password", code = "MIN_LENGTH", message = "minimum length is 8", rejectedValue = "[REDACTED]", path = "password"))
+            if (failFast) return ValidationResult(false, errors)
+        }
+
+        return ValidationResult(errors.isEmpty(), errors)
     }
 }
 ```
 
 ---
 
-## 🗃️ Global ValixRegistry
+## Comparison Matrix
 
-Valix compiles a reflection-free global registry `io.valix.generated.ValixRegistry` containing all compile-time registered validator mappings. This is extremely useful for running validation dynamically on generic inputs:
+| Feature | Valix | Bean Validation (JSR 380) | Valiktor | Konform |
+| :--- | :--- | :--- | :--- | :--- |
+| **Kotlin-First Design** | Yes | No (Java-centric) | Yes | Yes |
+| **Execution Model** | KSP Codegen | Runtime Reflection | Runtime Reflection | Type-safe DSL |
+| **Reflection-Free** | Yes | No | No | Yes |
+| **Kotlin Multiplatform (KMP)** | Yes (JVM, iOS, JS, Wasm) | No | No | Yes |
+| **Spring Boot / Ktor / Micronaut** | Yes (Dedicated Adapters) | Yes (Spring default) | Manual | Manual |
+| **Jetpack Compose Integration** | Yes | No | No | No |
+| **OpenAPI / JSON Schema Export** | Yes (Built-in Generator) | Ecosystem Addons | No | No |
+| **Fail-Fast Execution Mode** | Yes | No | No | No |
+| **Async Validator Codegen** | Yes | No | No | No |
+
+---
+
+## Performance Benchmark (JMH)
+
+Microbenchmarks executed via Java Microbenchmark Harness (JMH) comparing Valix against Hibernate Validator (the reference JSR-380 implementation):
+
+| Case | Hibernate Validator (JSR-380) | Valix | Throughput Speedup |
+| :--- | :--- | :--- | :--- |
+| **Invalid Payload Validation** | 874,809 ops/sec | **7,866,714 ops/sec** | **~9.0x speedup** |
+| **Valid Payload Validation** | 905,822 ops/sec | **8,511,063 ops/sec** | **~9.4x speedup** |
+
+*Bypassing runtime reflection and annotation introspection yields ~9.4x higher operational throughput with zero cold-start latency.*
+
+---
+
+## Installation
+
+### 1. Apply KSP Plugin (`build.gradle.kts`)
+```kotlin
+plugins {
+    kotlin("jvm") version "2.3.21"
+    id("com.google.devtools.ksp") version "2.3.9"
+}
+```
+
+### 2. Add Dependencies
+```kotlin
+dependencies {
+    // Core annotations and runtime
+    implementation("com.developersyndicate.valix:valix-core:1.0.3")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.3")
+
+    // KSP annotation processor
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.3")
+}
+```
+
+---
+
+## Ecosystem & Framework Adapters
+
+* **Spring Boot (`valix-spring`)**: Auto-configures `SpringMessageResolver` to translate message keys using native Spring `MessageSource` localizations and handles controller parameter validation.
+* **Ktor (`valix-ktor`)**: Pipeline interceptor validating incoming call request payloads automatically.
+* **Micronaut (`valix-micronaut`)**: AOP advice (`@ValixValidated`) and method interceptor for parameter validation.
+* **Jetpack Compose (`valix-compose`)**: State management via `rememberValixForm()` and `ValidatedTextField`.
+* **Coroutines Flow (`valix-flow`)**: Reactive stream validation operator (`validateWith`).
+* **Architecture Components (`valix-viewmodel`)**: ViewModel state binding via `ValixFormViewModel`.
+
+---
+
+## Key Features
+
+### 1. Fail-Fast Execution (`failFast = true`)
+Terminate validation execution immediately on the first encountered error to reduce unnecessary processing:
 
 ```kotlin
-import io.valix.generated.ValixRegistry
+val result = CreateUserRequestValidator.validate(request, failFast = true)
+```
 
-fun validatePayload(payload: Any) {
-    val result = ValixRegistry.validate(payload)
-    if (!result.valid) {
-        // Handle validation errors...
+### 2. Sensitive Data Masking (`@Sensitive`)
+Redact sensitive inputs from error reporting:
+
+```kotlin
+data class LoginRequest(
+    @NotBlank
+    val username: String,
+
+    @Sensitive(mask = "[REDACTED]")
+    @MinLength(8)
+    val password: String
+)
+```
+
+### 3. Conditional Validation (`@ValidateIf`)
+Evaluate constraints on a property only when sibling properties satisfy condition checks:
+
+```kotlin
+data class PaymentRequest(
+    val paymentType: String,
+
+    @ValidateIf(field = "paymentType", equals = "CARD")
+    @NotBlank(message = "Card number is required for card payments")
+    val cardNumber: String?
+)
+```
+
+### 4. Dynamic Parameter Interpolation
+Expose constraint parameters (`min`, `max`, `value`) directly inside error message templates:
+
+```kotlin
+data class Account(
+    @MinLength(value = 8, message = "Minimum length is {min}")
+    val username: String
+)
+```
+
+### 5. Programmatic Builder DSL (`valixDsl`)
+Validate third-party or domain models without adding annotations:
+
+```kotlin
+val UserValidator = valixDsl<DomainUser> {
+    field("email", DomainUser::email) {
+        notBlank()
+        email()
+    }
+    field("age", DomainUser::age) {
+        min(18)
     }
 }
 ```
 
 ---
 
-## 🚀 Migration Notes
+## Supported Constraints
 
-- **Naming evolution**: `Valix` now generates `<ClassName>Validator` as the primary validator class.
-- **Backward compatibility**: The older suffix `<ClassName>ValixValidator` continues to be generated and works as an alias delegating directly to `<ClassName>Validator`.
-- **`ValidationError` upgrade**: `ValidationError` now contains `rejectedValue: Any?` to retrieve the invalid value, `constraint: String?` representing the FQN of the failed annotation, and `path: String` representing the nested property path. Legacy constructions continue to work seamlessly.
+### String Constraints
+`@NotNull`, `@NotBlank`, `@Email`, `@MinLength(val)`, `@MaxLength(val)`, `@Pattern(regex)`, `@Url`, `@PhoneNumber`, `@Alpha`, `@AlphaNumeric`, `@LowerCase`, `@UpperCase`, `@Contains(val)`, `@StartsWith(val)`, `@EndsWith(val)`.
+
+### Numeric Constraints
+`@Min(val)`, `@Max(val)`, `@Range(min, max)`, `@Positive`, `@PositiveOrZero`, `@Negative`, `@NegativeOrZero`.
+
+### Collection & Enum Constraints
+`@NotEmpty`, `@Size(min, max)`, `@AllowedValues(array)`.
 
 ---
 
-## 🛠️ Advanced Platform Features (Phase 4)
+## Documentation & AI Context
 
-Valix Phase 4 introduces robust customization capabilities transforming it into a full validation platform.
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
-### 1. Custom Property Validators
-Create your own custom property annotations by applying the `@Constraint` meta-annotation pointing to a class implementing `ConstraintValidator<T>`:
+* **[Architecture & Internals](docs/ARCHITECTURE.md)**: KSP processing pipeline, generated code structure, and multiplatform design.
+* **[Developer Cheatsheet](docs/CHEATSHEET.md)**: Annotation quick reference and feature summary.
+* **[Advanced Features](docs/ADVANCED.md)**: `@Sensitive`, `@ValidateIf`, `failFast`, schema export, and `valixDsl`.
+* **Framework Guides**:
+  * [Spring Boot Integration](docs/framework-guides/SPRING.md)
+  * [Ktor Integration](docs/framework-guides/KTOR.md)
+  * [Micronaut Integration](docs/framework-guides/MICRONAUT.md)
+  * [Jetpack Compose Integration](docs/framework-guides/COMPOSE.md)
+  * [ViewModel & Flow Integration](docs/framework-guides/VIEWMODEL_FLOW.md)
+* **AI & LLM Context Prompting**:
+  * **[`docs/LLMS.txt`](docs/LLMS.txt)**: High-density context summary for AI coding assistants.
+  * **[`docs/LLMS_FULL.txt`](docs/LLMS_FULL.txt)**: Complete API and integration reference for LLM context ingestion.
 
-```kotlin
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.ANNOTATION_CLASS)
-@Constraint(validator = UsernameValidator::class)
-annotation class Username(
-    val message: String = "invalid username",
-    val groups: Array<KClass<*>> = []
-)
+---
 
-class UsernameValidator : ConstraintValidator<String> {
-    override fun validate(value: String, context: ValidationContext): Boolean {
-        return value.matches(Regex("^[a-z0-9_]+$"))
-    }
-}
+## License
+
+```text
+Copyright 2026 Developer Syndicate
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
-
-### 2. Validation Context
-Custom validators receive a `ValidationContext` containing runtime information:
-- `context.fieldName`: The simple name of the validated property.
-- `context.path`: The fully qualified nested property path (e.g. `user.profile.website`).
-- `context.rootObject`: The top-level class object being validated.
-- `context.groups`: The active validation groups list.
-
-### 3. Composed Meta-Annotations
-Build reusable validation bundles (constraint composition) from existing annotations. The generator recursively expands composed meta-annotations and propagates message and groups:
-
-```kotlin
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.ANNOTATION_CLASS)
-@NotBlank
-@MinLength(8)
-@Pattern("^(?=.*[A-Z])(?=.*[0-9]).*$")
-annotation class StrongPassword(
-    val message: String = "must be a strong password",
-    val groups: Array<KClass<*>> = []
-)
-```
-
-### 4. Object-Level & Cross-Field Validation
-Perform validations on class declarations using `ObjectConstraintValidator<T>`:
-
-```kotlin
-@Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
-@Constraint(validator = DateRangeValidator::class)
-annotation class ValidDateRange(
-    val message: String = "invalid date range",
-    val groups: Array<KClass<*>> = []
-)
-
-class DateRangeValidator : ObjectConstraintValidator<Event> {
-    override fun validate(value: Event, context: ValidationContext): Boolean {
-        return !value.startDate.isAfter(value.endDate)
-    }
-}
-```
-
-### 5. Cross-Field Equality (`@FieldsMatch`)
-Use the built-in `@FieldsMatch` class-level annotation to assert that two properties match:
-
-```kotlin
-@FieldsMatch(
-    first = "password",
-    second = "confirmPassword",
-    message = "Passwords must match"
-)
-data class RegisterRequest(
-    val email: String,
-    val password: String,
-    val confirmPassword: String
-)
-```
-

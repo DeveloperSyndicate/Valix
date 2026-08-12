@@ -5,13 +5,13 @@ plugins {
     id("com.google.devtools.ksp") version "2.3.9" apply false
     id("com.android.application") version "9.1.1" apply false
     id("com.android.library") version "9.1.1" apply false
-    id("org.jetbrains.dokka") version "1.9.20" apply false
+    id("org.jetbrains.dokka") version "1.9.20"
     id("com.vanniktech.maven.publish") version "0.29.0" apply false
 }
 
 allprojects {
     group = "com.developersyndicate.valix"
-    version = "1.0.2"
+    version = "1.0.3"
 }
 
 subprojects {
