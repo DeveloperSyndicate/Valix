@@ -12,7 +12,7 @@ Add dependency to `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.developersyndicate.valix:valix-micronaut:1.0.2")
+    implementation("com.developersyndicate.valix:valix-micronaut:1.0.3")
 }
 ```
 

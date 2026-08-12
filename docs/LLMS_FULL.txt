@@ -1,13 +1,13 @@
 # Valix Complete API & Context Reference for LLM Prompting
 
-> This file contains the complete, unabridged technical reference of Valix v1.0.2 for ingestion into Large Language Models (LLMs) such as Claude, GPT-4, Gemini, and Cursor/Antigravity coding assistants.
+> This file contains the complete, unabridged technical reference of Valix v1.0.3 for ingestion into Large Language Models (LLMs) such as Claude, GPT-4, Gemini, and Cursor/Antigravity coding assistants.
 
 ---
 
 ## 1. Executive Summary & Core Rules
 
 - **Library Group**: `com.developersyndicate.valix`
-- **Current Version**: `1.0.2`
+- **Current Version**: `1.0.3`
 - **Primary Paradigm**: KSP-generated procedural Kotlin validation (Zero Reflection).
 - **Execution Target**: Kotlin Multiplatform (`commonMain`, JVM, Android, iOS, Web/JS, WebAssembly/Wasm).
 - **Codegen Rule**: Any class containing constraint annotations or `@Valid` triggers KSP generation of `<ClassName>Validator` inside `<packageName>.generated`.
@@ -27,20 +27,20 @@ plugins {
 
 dependencies {
     // Core & Runtime (KMP Compatible)
-    implementation("com.developersyndicate.valix:valix-core:1.0.2")
-    implementation("com.developersyndicate.valix:valix-runtime:1.0.2")
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.2")
+    implementation("com.developersyndicate.valix:valix-core:1.0.3")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.3")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.3")
 
     // Ecosystem Framework Adapters
-    implementation("com.developersyndicate.valix:valix-spring:1.0.2")       // Spring Boot AutoConfig & @ValidValix
-    implementation("com.developersyndicate.valix:valix-ktor:1.0.2")         // Ktor Application Plugin
-    implementation("com.developersyndicate.valix:valix-micronaut:1.0.2")    // Micronaut @ValixValidated Interceptor
-    implementation("com.developersyndicate.valix:valix-compose:1.0.2")      // Jetpack Compose rememberValixForm
-    implementation("com.developersyndicate.valix:valix-flow:1.0.2")         // Coroutines Flow validateWith
-    implementation("com.developersyndicate.valix:valix-viewmodel:1.0.2")    // ValixFormViewModel
-    implementation("com.developersyndicate.valix:valix-schema:1.0.2")       // JSON Schema & OpenAPI 3.1 Exporter
-    implementation("com.developersyndicate.valix:valix-serialization:1.0.2") // kotlinx.serialization Bridge
-    implementation("com.developersyndicate.valix:valix-localization:1.0.2")  // Properties ResourceBundle i18n
+    implementation("com.developersyndicate.valix:valix-spring:1.0.3")       // Spring Boot AutoConfig & @ValidValix
+    implementation("com.developersyndicate.valix:valix-ktor:1.0.3")         // Ktor Application Plugin
+    implementation("com.developersyndicate.valix:valix-micronaut:1.0.3")    // Micronaut @ValixValidated Interceptor
+    implementation("com.developersyndicate.valix:valix-compose:1.0.3")      // Jetpack Compose rememberValixForm
+    implementation("com.developersyndicate.valix:valix-flow:1.0.3")         // Coroutines Flow validateWith
+    implementation("com.developersyndicate.valix:valix-viewmodel:1.0.3")    // ValixFormViewModel
+    implementation("com.developersyndicate.valix:valix-schema:1.0.3")       // JSON Schema & OpenAPI 3.1 Exporter
+    implementation("com.developersyndicate.valix:valix-serialization:1.0.3") // kotlinx.serialization Bridge
+    implementation("com.developersyndicate.valix:valix-localization:1.0.3")  // Properties ResourceBundle i18n
 }
 ```
 
