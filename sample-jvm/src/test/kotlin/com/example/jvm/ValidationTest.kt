@@ -583,7 +583,7 @@ class ValidationTest {
         val _triggerRegistry = io.valix.generated.ValixRegistry
         val resolver = PropertiesMessageResolver()
         ValixConfig.messageResolver = resolver
-        ValixConfig.defaultLocale = Locale.ENGLISH
+        ValixConfig.defaultLocale = io.valix.core.ValixLocale.ENGLISH
 
         val user = TestUser(
             username = "user",
