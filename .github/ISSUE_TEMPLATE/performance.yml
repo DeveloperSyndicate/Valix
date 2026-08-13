@@ -1,0 +1,58 @@
+name: Performance Issue
+description: Report a performance, allocation, build-time, or code-generation issue
+title: "[Performance]: "
+labels:
+  - performance
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Performance Problem
+      description: Describe the performance issue.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Performance Category
+      options:
+        - Runtime validation
+        - KSP processing
+        - Build time
+        - Memory allocation
+        - Generated code
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: valix-version
+    attributes:
+      label: Valix Version
+    validations:
+      required: true
+
+  - type: input
+    id: kotlin-version
+    attributes:
+      label: Kotlin Version
+    validations:
+      required: true
+
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: Benchmark or Measurement
+      description: Provide benchmark results or measurements if available.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide a minimal example or repository.
+    validations:
+      required: false

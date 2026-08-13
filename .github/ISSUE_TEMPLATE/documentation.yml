@@ -1,0 +1,30 @@
+name: Documentation Improvement
+description: Report missing, unclear, or incorrect documentation
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Provide the documentation page or file.
+      placeholder: "https://..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What Could Be Improved?
+      description: Explain what is unclear, missing, or incorrect.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: If you know how it could be improved, describe it here.
+    validations:
+      required: false
