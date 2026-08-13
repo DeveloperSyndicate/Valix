@@ -1,0 +1,54 @@
+name: Feature Request
+description: Suggest an improvement or new feature for Valix
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Valix.
+
+        For general design discussions, consider starting a GitHub Discussion first.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem are you trying to solve?
+      placeholder: |
+        As a developer using Valix, I currently cannot...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Describe how you think Valix could solve this.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other approaches or workarounds have you considered?
+    validations:
+      required: false
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example API
+      description: If applicable, show how you would like the API to look.
+      render: kotlin
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+    validations:
+      required: false
