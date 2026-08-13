@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Ask a Question
+    url: https://github.com/DeveloperSyndicate/Valix/discussions
+    about: Ask questions and get help from the Valix community.
+
+  - name: Discuss an API or Design Idea
+    url: https://github.com/DeveloperSyndicate/Valix/discussions
+    about: Discuss ideas and API design before opening a feature request.
+
+  - name: Valix Documentation
+    url: https://github.com/DeveloperSyndicate/Valix
+    about: Read the documentation before opening an issue.
