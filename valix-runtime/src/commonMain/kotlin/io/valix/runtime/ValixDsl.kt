@@ -4,12 +4,23 @@ import io.valix.core.ValidationError
 import io.valix.core.ValidationResult
 import io.valix.core.ValixValidator
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 /**
  * Fluent programmatic validation builder for dynamic or unannotated data classes.
  */
 class ValixDslBuilder<T> {
     private val fieldValidators = mutableListOf<(T, MutableList<ValidationError>, Boolean) -> Boolean>()
+
+    /**
+     * Registers validation constraints on property extracted by [property].
+     */
+    fun <P> field(
+        property: KProperty1<T, P>,
+        builder: PropertyValidationBuilder<P>.() -> Unit
+    ) {
+        field(property.name, { property.get(it) }, builder)
+    }
 
     /**
      * Registers validation constraints on property extracted by [propertyGetter].
