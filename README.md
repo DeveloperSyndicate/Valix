@@ -1,6 +1,6 @@
 # Valix
 
-Compile-time validation for Kotlin. Zero reflection. Generated Kotlin code.
+Compile-time generated validation logic for Kotlin. Zero reflection. Generated Kotlin code.
 
 [![Build Status](https://github.com/developersyndicate/valix/actions/workflows/publish.yml/badge.svg)](https://github.com/developersyndicate/valix/actions/workflows/publish.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/com.developersyndicate.valix/valix-core.svg)](https://search.maven.org/artifact/com.developersyndicate.valix/valix-core)
