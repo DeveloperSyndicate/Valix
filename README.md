@@ -244,6 +244,7 @@ val UserValidator = valixDsl<DomainUser> {
 
 * **[API Reference Documentation (Dokka Pages)](https://developersyndicate.github.io/Valix/)**
 * **[Medium Article: Building a Zero-Reflection Validation Engine in Kotlin](https://medium.com/@imsaba16/building-a-zero-reflection-validation-engine-in-kotlin-using-ksp-91a538badb65)**
+* **[Medium Article: Can Compile-Time Generated Validation Really Be Faster?](https://medium.com/@imsaba16/can-compile-time-generated-validation-really-be-faster-f2d659c06040)**
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
