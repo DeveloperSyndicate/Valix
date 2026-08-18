@@ -480,7 +480,7 @@ class ValixProcessor(
 
         val originatingFiles = classDecl.containingFile?.let { arrayOf(it) } ?: emptyArray()
         val dependencies = Dependencies(aggregating = false, *originatingFiles)
-
+        
         // File 1: classNameValidator.kt
         val fileSpec1 = FileSpec.builder(generatedPackageName, validatorName)
             .addType(validatorObject.build())
