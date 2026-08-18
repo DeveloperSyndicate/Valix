@@ -1,5 +1,9 @@
 # Valix
 
+<p align="center">
+  <img src="images/logo.png" alt="Valix Logo" width="160px">
+</p>
+
 Compile-time generated validation logic for Kotlin. Zero reflection. Generated Kotlin code.
 
 [![Build Status](https://github.com/developersyndicate/valix/actions/workflows/publish.yml/badge.svg)](https://github.com/developersyndicate/valix/actions/workflows/publish.yml)
