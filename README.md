@@ -252,6 +252,8 @@ val UserValidator = valixDsl<DomainUser> {
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
+* **[Frequently Asked Questions](docs/FAQ.md)**: Runtime validation boundaries, reflection details, and platform compatibility.
+* **[Valix vs. Hibernate Validator Comparison](docs/COMPARISON.md)**: Factual architectural comparison and use cases.
 * **[Architecture & Internals](docs/ARCHITECTURE.md)**: KSP processing pipeline, generated code structure, and multiplatform design.
 * **[Developer Cheatsheet](docs/CHEATSHEET.md)**: Annotation quick reference and feature summary.
 * **[Advanced Features](docs/ADVANCED.md)**: `@Sensitive`, `@ValidateIf`, `failFast`, schema export, and `valixDsl`.
