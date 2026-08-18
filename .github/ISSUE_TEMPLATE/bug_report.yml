@@ -1,0 +1,99 @@
+name: Bug Report
+description: Report a reproducible problem with Valix
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Before submitting, please check existing issues to make sure this hasn't already been reported.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clearly describe what went wrong.
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide the smallest possible example that reproduces the problem.
+      placeholder: |
+        1. Create a data class with...
+        2. Add @Email...
+        3. Run ./gradlew build
+        4. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: input
+    id: valix-version
+    attributes:
+      label: Valix Version
+      placeholder: "e.g. 1.0.3"
+    validations:
+      required: true
+
+  - type: input
+    id: kotlin-version
+    attributes:
+      label: Kotlin Version
+      placeholder: "e.g. 2.2.x"
+    validations:
+      required: true
+
+  - type: input
+    id: ksp-version
+    attributes:
+      label: KSP Version
+      placeholder: "e.g. 2.x.x"
+    validations:
+      required: false
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: "Android / JVM / KMP / Server"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Paste relevant compiler or runtime errors.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: Minimal Reproduction
+      description: Provide a minimal code example or link to a repository.
+    validations:
+      required: false

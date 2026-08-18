@@ -1,0 +1,14 @@
+[
+  {
+    "name": "io.valix.core.ValidationResult",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.valix.core.ValidationError",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  }
+]

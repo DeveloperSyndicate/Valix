@@ -4,12 +4,23 @@ import io.valix.core.ValidationError
 import io.valix.core.ValidationResult
 import io.valix.core.ValixValidator
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 /**
  * Fluent programmatic validation builder for dynamic or unannotated data classes.
  */
 class ValixDslBuilder<T> {
     private val fieldValidators = mutableListOf<(T, MutableList<ValidationError>, Boolean) -> Boolean>()
+
+    /**
+     * Registers validation constraints on property extracted by [property].
+     */
+    fun <P> field(
+        property: KProperty1<T, P>,
+        builder: PropertyValidationBuilder<P>.() -> Unit
+    ) {
+        field(property.name, { property.get(it) }, builder)
+    }
 
     /**
      * Registers validation constraints on property extracted by [propertyGetter].
@@ -32,9 +43,9 @@ class ValixDslBuilder<T> {
                             field = name,
                             code = rule.code,
                             message = rule.message,
-                            messageKey = "valix.${rule.code.lowercase()}",
+                            messageKey = "${ValixDslConstants.KEY_PREFIX}${rule.code.lowercase()}",
                             rejectedValue = value,
-                            constraint = "io.valix.dsl.${rule.code}",
+                            constraint = "${ValixDslConstants.DSL_CONSTRAINT_PREFIX}${rule.code}",
                             path = name
                         )
                     )
@@ -93,7 +104,7 @@ class PropertyValidationBuilder<P>(private val fieldName: String) {
     fun email(message: String = "$fieldName must be a valid email") {
         rules.add(ValidationRule("EMAIL", message) {
             val str = it as? String ?: return@ValidationRule false
-            str.matches(Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))
+            str.matches(ValixDslConstants.EMAIL_REGEX)
         })
     }
 

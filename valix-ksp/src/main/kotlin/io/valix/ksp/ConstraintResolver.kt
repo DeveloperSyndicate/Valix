@@ -21,17 +21,17 @@ object ConstraintResolver {
             val superType = superTypeRef.resolve()
             val decl = superType.declaration as? KSClassDeclaration ?: continue
             val qName = decl.qualifiedName?.asString()
-            if (qName == "io.valix.core.ConstraintValidator") {
+            if (qName == ValixAnnotationNames.CONSTRAINT_VALIDATOR) {
                 val expected = superType.arguments.firstOrNull()?.type?.resolve()
                 if (expected != null) {
                     return ValidatorInterfaceInfo(isObjectValidator = false, expectedType = expected, isAsync = false)
                 }
-            } else if (qName == "io.valix.core.ObjectConstraintValidator") {
+            } else if (qName == ValixAnnotationNames.OBJECT_CONSTRAINT_VALIDATOR) {
                 val expected = superType.arguments.firstOrNull()?.type?.resolve()
                 if (expected != null) {
                     return ValidatorInterfaceInfo(isObjectValidator = true, expectedType = expected, isAsync = false)
                 }
-            } else if (qName == "io.valix.runtime.AsyncConstraintValidator") {
+            } else if (qName == ValixAnnotationNames.ASYNC_CONSTRAINT_VALIDATOR) {
                 val expected = superType.arguments.firstOrNull()?.type?.resolve()
                 if (expected != null) {
                     return ValidatorInterfaceInfo(isObjectValidator = false, expectedType = expected, isAsync = true)
@@ -52,7 +52,7 @@ object ConstraintResolver {
         val targetType = property.type.resolve()
         val directAnnotations = property.annotations.filter {
             val fqName = it.annotationType.resolve().declaration.qualifiedName?.asString()
-            fqName != "io.valix.annotations.Valid" && fqName != "io.valix.annotations.NotNull"
+            fqName != ValixAnnotationNames.VALID && fqName != ValixAnnotationNames.NOT_NULL
         }.toList()
 
         return resolveRecursive(directAnnotations, targetType, property, resolver, logger, isObjectLevel = false)
@@ -90,12 +90,12 @@ object ConstraintResolver {
 
             // Check if it is annotated with @Constraint (custom validator)
             val constraintAnn = annClass.annotations.firstOrNull {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Constraint"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.CONSTRAINT
             }
 
             var isAsyncConstraint = false
             val validatorFqName = if (constraintAnn != null) {
-                val validatorType = constraintAnn.arguments.firstOrNull { it.name?.asString() == "validator" }?.value as? KSType
+                val validatorType = constraintAnn.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_VALIDATOR }?.value as? KSType
                 validatorType?.declaration?.qualifiedName?.asString()
             } else {
                 null
@@ -139,11 +139,11 @@ object ConstraintResolver {
             }
 
             // Parse common parameters
-            val message = ann.arguments.firstOrNull { it.name?.asString() == "message" }?.value as? String ?: ""
-            val messageKey = ann.arguments.firstOrNull { it.name?.asString() == "messageKey" }?.value as? String ?: ""
+            val message = ann.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_MESSAGE }?.value as? String ?: ""
+            val messageKey = ann.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_MESSAGE_KEY }?.value as? String ?: ""
 
             val groups = mutableListOf<String>()
-            val groupsArg = ann.arguments.firstOrNull { it.name?.asString() == "groups" }?.value as? List<*>
+            val groupsArg = ann.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_GROUPS }?.value as? List<*>
             if (groupsArg != null) {
                 for (g in groupsArg) {
                     if (g is KSType) {
@@ -157,7 +157,7 @@ object ConstraintResolver {
 
             val metaAnnotations = annClass.annotations.filter {
                 val name = it.annotationType.resolve().declaration.qualifiedName?.asString() ?: ""
-                name != "io.valix.annotations.Constraint" &&
+                name != ValixAnnotationNames.CONSTRAINT &&
                 !name.startsWith("kotlin.annotation.") &&
                 !name.startsWith("java.lang.annotation.")
             }.toList()
