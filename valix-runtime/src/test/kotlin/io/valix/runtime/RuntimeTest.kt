@@ -123,4 +123,33 @@ class RuntimeTest {
         assertEquals(1L, entry.count)
         assertTrue(entry.totalDurationNs > 0)
     }
+
+    @Test
+    fun testDslWithKProperties() {
+        val validator = valixDsl<MockUser> {
+            field(MockUser::email) {
+                notBlank()
+                email()
+            }
+            field(MockUser::age) {
+                min(18)
+            }
+        }
+
+        val invalidUser = MockUser(" ", 15)
+        val result = validator.validate(invalidUser)
+        assertFalse(result.valid)
+        assertEquals(2, result.errors.size)
+
+        val emailError = result.errors.find { it.field == "email" }
+        assertNotNull(emailError)
+        assertEquals("NOT_BLANK", emailError.code)
+        assertEquals(io.valix.core.ValixErrorCode.NOT_BLANK, emailError.errorCode)
+
+        val ageError = result.errors.find { it.field == "age" }
+        assertNotNull(ageError)
+        assertEquals("MIN", ageError.code)
+        assertEquals(io.valix.core.ValixErrorCode.MIN, ageError.errorCode)
+    }
 }
+

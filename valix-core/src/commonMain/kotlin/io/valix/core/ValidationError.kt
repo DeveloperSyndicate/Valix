@@ -19,4 +19,8 @@ data class ValidationError(
     val constraint: String? = null,
     val path: String = field,
     val messageKey: String = ""
-)
+) {
+    /** The resolved type-safe [ValixErrorCode] representation of the error code, if it matches a standard code. */
+    val errorCode: ValixErrorCode? get() = ValixErrorCode.fromCode(code)
+}
+

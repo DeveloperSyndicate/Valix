@@ -66,7 +66,9 @@ jobs:
           fi
 
       - name: Generate Dokka Documentation
-        run: ./gradlew dokkaHtmlMultiModule --no-configuration-cache
+        run: |
+          ./gradlew dokkaHtmlMultiModule --no-configuration-cache
+          touch ./build/dokka/htmlMultiModule/.nojekyll
 
       - name: Deploy Dokka Docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -75,4 +77,5 @@ jobs:
           publish_dir: ./build/dokka/htmlMultiModule
           publish_branch: gh-pages
           commit_message: "docs: publish Dokka API documentation for version ${{ steps.get_version.outputs.VERSION }}"
+
 
