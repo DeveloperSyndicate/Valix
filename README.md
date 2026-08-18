@@ -121,6 +121,14 @@ Microbenchmarks executed via Java Microbenchmark Harness (JMH) comparing Valix a
 
 ---
 
+## Examples & Benchmarks
+
+For complete integration projects and real-time validation execution benchmarks of Valix across Spring Boot, Micronaut, Ktor, Kotlin Multiplatform (KMP), and Android Jetpack Compose, check out the dedicated examples repository:
+
+👉 **[DeveloperSyndicate/Valix-Examples](https://github.com/DeveloperSyndicate/Valix-Examples)**
+
+---
+
 ## Installation
 
 ### 1. Apply KSP Plugin (`build.gradle.kts`)
@@ -135,11 +143,11 @@ plugins {
 ```kotlin
 dependencies {
     // Core annotations and runtime
-    implementation("com.developersyndicate.valix:valix-core:1.0.3")
-    implementation("com.developersyndicate.valix:valix-runtime:1.0.3")
+    implementation("com.developersyndicate.valix:valix-core:1.0.4")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.4")
 
     // KSP annotation processor
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.3")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.4")
 }
 ```
 
@@ -233,6 +241,9 @@ val UserValidator = valixDsl<DomainUser> {
 ---
 
 ## Documentation & AI Context
+
+* **[API Reference Documentation (Dokka Pages)](https://developersyndicate.github.io/Valix/)**
+* **[Medium Article: Building a Zero-Reflection Validation Engine in Kotlin](https://medium.com/@imsaba16/building-a-zero-reflection-validation-engine-in-kotlin-using-ksp-91a538badb65)**
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 

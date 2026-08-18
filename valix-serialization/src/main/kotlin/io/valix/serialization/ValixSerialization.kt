@@ -10,83 +10,65 @@ import kotlinx.serialization.descriptors.SerialDescriptor
  *
  * @return JSON string encoding of the model metadata.
  */
-fun ValixModelMetadata.toJson(): String {
-    val sb = StringBuilder()
-    sb.append("{\n")
-    sb.append("  \"modelFqName\": \"$modelFqName\",\n")
-    sb.append("  \"modelSimpleName\": \"$modelSimpleName\",\n")
-    sb.append("  \"schemaVersion\": $schemaVersion,\n")
-    sb.append("  \"metadataVersion\": \"$metadataVersion\",\n")
-    sb.append("  \"fields\": [\n")
+fun ValixModelMetadata.toJson(): String = buildString {
+    append("{\n")
+    append("  \"modelFqName\": \"$modelFqName\",\n")
+    append("  \"modelSimpleName\": \"$modelSimpleName\",\n")
+    append("  \"schemaVersion\": $schemaVersion,\n")
+    append("  \"metadataVersion\": \"$metadataVersion\",\n")
+    append("  \"fields\": [\n")
     for (i in fields.indices) {
         val field = fields[i]
-        sb.append("    {\n")
-        sb.append("      \"name\": \"${field.name}\",\n")
-        sb.append("      \"type\": \"${field.type}\",\n")
-        sb.append("      \"nullable\": ${field.nullable},\n")
-        sb.append("      \"required\": ${field.required},\n")
-        sb.append("      \"displayName\": \"${escapeJson(field.displayName)}\",\n")
-        sb.append("      \"description\": \"${escapeJson(field.description)}\",\n")
-        sb.append("      \"constraints\": [\n")
+        append("    {\n")
+        append("      \"name\": \"${field.name}\",\n")
+        append("      \"type\": \"${field.type}\",\n")
+        append("      \"nullable\": ${field.nullable},\n")
+        append("      \"required\": ${field.required},\n")
+        append("      \"displayName\": \"${escapeJson(field.displayName)}\",\n")
+        append("      \"description\": \"${escapeJson(field.description)}\",\n")
+        append("      \"constraints\": [\n")
         for (j in field.constraints.indices) {
-            val constraint = field.constraints[j]
-            sb.append("        {\n")
-            sb.append("          \"annotationFqName\": \"${constraint.annotationFqName}\",\n")
-            sb.append("          \"constraintCode\": \"${constraint.constraintCode}\",\n")
-            sb.append("          \"messageKey\": \"${constraint.messageKey}\",\n")
-            sb.append("          \"defaultMessage\": \"${escapeJson(constraint.defaultMessage)}\",\n")
-            sb.append("          \"params\": {")
-            val paramEntries = constraint.params.entries.toList()
-            for (k in paramEntries.indices) {
-                val entry = paramEntries[k]
-                val v = entry.value
-                val valExpr = if (v is Number || v is Boolean) "$v" else "\"${escapeJson(v.toString())}\""
-                sb.append("\"${entry.key}\": $valExpr")
-                if (k < paramEntries.size - 1) sb.append(", ")
-            }
-            sb.append("},\n")
-            sb.append("          \"groups\": [" + constraint.groups.joinToString(", ") { "\"$it\"" } + "],\n")
-            sb.append("          \"isCustom\": ${constraint.isCustom},\n")
-            sb.append("          \"schemaKeyword\": \"${constraint.schemaKeyword.name}\"\n")
-            sb.append("        }")
-            if (j < field.constraints.size - 1) sb.append(",")
-            sb.append("\n")
+            appendConstraintJson(field.constraints[j], "        ")
+            if (j < field.constraints.size - 1) append(",")
+            append("\n")
         }
-        sb.append("      ]\n")
-        sb.append("    }")
-        if (i < fields.size - 1) sb.append(",")
-        sb.append("\n")
+        append("      ]\n")
+        append("    }")
+        if (i < fields.size - 1) append(",")
+        append("\n")
     }
-    sb.append("  ],\n")
-    sb.append("  \"classConstraints\": [\n")
+    append("  ],\n")
+    append("  \"classConstraints\": [\n")
     for (i in classConstraints.indices) {
-        val constraint = classConstraints[i]
-        sb.append("    {\n")
-        sb.append("      \"annotationFqName\": \"${constraint.annotationFqName}\",\n")
-        sb.append("      \"constraintCode\": \"${constraint.constraintCode}\",\n")
-        sb.append("      \"messageKey\": \"${constraint.messageKey}\",\n")
-        sb.append("      \"defaultMessage\": \"${escapeJson(constraint.defaultMessage)}\",\n")
-        sb.append("      \"params\": {")
-        val paramEntries = constraint.params.entries.toList()
-        for (k in paramEntries.indices) {
-            val entry = paramEntries[k]
-            val v = entry.value
-            val valExpr = if (v is Number || v is Boolean) "$v" else "\"${escapeJson(v.toString())}\""
-            sb.append("\"${entry.key}\": $valExpr")
-            if (k < paramEntries.size - 1) sb.append(", ")
-        }
-        sb.append("},\n")
-        sb.append("      \"groups\": [" + constraint.groups.joinToString(", ") { "\"$it\"" } + "],\n")
-        sb.append("      \"isCustom\": ${constraint.isCustom},\n")
-        sb.append("      \"schemaKeyword\": \"${constraint.schemaKeyword.name}\"\n")
-        sb.append("    }")
-        if (i < classConstraints.size - 1) sb.append(",")
-        sb.append("\n")
+        appendConstraintJson(classConstraints[i], "    ")
+        if (i < classConstraints.size - 1) append(",")
+        append("\n")
     }
-    sb.append("  ],\n")
-    sb.append("  \"groups\": [" + groups.joinToString(", ") { "\"$it\"" } + "]\n")
-    sb.append("}")
-    return sb.toString()
+    append("  ],\n")
+    append("  \"groups\": [" + groups.joinToString(", ") { "\"$it\"" } + "]\n")
+    append("}")
+}
+
+private fun StringBuilder.appendConstraintJson(constraint: ConstraintMetadata, indent: String) {
+    append("$indent{\n")
+    append("$indent  \"annotationFqName\": \"${constraint.annotationFqName}\",\n")
+    append("$indent  \"constraintCode\": \"${constraint.constraintCode}\",\n")
+    append("$indent  \"messageKey\": \"${constraint.messageKey}\",\n")
+    append("$indent  \"defaultMessage\": \"${escapeJson(constraint.defaultMessage)}\",\n")
+    append("$indent  \"params\": {")
+    val paramEntries = constraint.params.entries.toList()
+    for (k in paramEntries.indices) {
+        val entry = paramEntries[k]
+        val v = entry.value
+        val valExpr = if (v is Number || v is Boolean) "$v" else "\"${escapeJson(v.toString())}\""
+        append("\"${entry.key}\": $valExpr")
+        if (k < paramEntries.size - 1) append(", ")
+    }
+    append("},\n")
+    append("$indent  \"groups\": [" + constraint.groups.joinToString(", ") { "\"$it\"" } + "],\n")
+    append("$indent  \"isCustom\": ${constraint.isCustom},\n")
+    append("$indent  \"schemaKeyword\": \"${constraint.schemaKeyword.name}\"\n")
+    append("$indent}")
 }
 
 private fun escapeJson(str: String): String {

@@ -58,10 +58,10 @@ class ValixProcessor(
             for (property in classDecl.getAllProperties()) {
                 val descriptors = ConstraintResolver.resolvePropertyConstraints(property, resolver, logger)
                 val hasNotNull = property.annotations.any {
-                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.NotNull"
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.NOT_NULL
                 }
                 val hasValid = property.annotations.any {
-                    it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Valid"
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.VALID
                 }
                 if (descriptors.isNotEmpty() || hasNotNull || hasValid) {
                     propertyDescriptors[property] = descriptors
@@ -199,23 +199,23 @@ class ValixProcessor(
             val isNullable = type.isMarkedNullable
 
             val hasValid = property.annotations.any {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Valid"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.VALID
             }
 
             val sensitiveAnn = property.annotations.firstOrNull {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.Sensitive"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.SENSITIVE
             }
             val sensitiveMask = if (sensitiveAnn != null) {
                 val maskArg = sensitiveAnn.arguments.firstOrNull { it.name?.asString() == "mask" }?.value as? String
-                maskArg ?: "********"
+                maskArg ?: ValixAnnotationNames.DEFAULT_SENSITIVE_MASK
             } else null
 
             val validateIfAnn = property.annotations.firstOrNull {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.ValidateIf"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.VALIDATE_IF
             }
             val validateIfCondition = if (validateIfAnn != null) {
-                val targetField = validateIfAnn.arguments.firstOrNull { it.name?.asString() == "field" }?.value as? String ?: ""
-                val equalsVal = validateIfAnn.arguments.firstOrNull { it.name?.asString() == "equals" }?.value as? String ?: ""
+                val targetField = validateIfAnn.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_FIELD }?.value as? String ?: ""
+                val equalsVal = validateIfAnn.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_EQUALS }?.value as? String ?: ""
                 if (targetField.isNotEmpty()) {
                     if (equalsVal.isNotEmpty()) {
                         CodeBlock.of("value.%L == %S", targetField, equalsVal)
@@ -344,12 +344,12 @@ class ValixProcessor(
             val notNullGroups = mutableListOf<String>()
 
             val notNullAnn = property.annotations.firstOrNull {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.NotNull"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.NOT_NULL
             }
             if (notNullAnn != null) {
                 hasNotNull = true
-                notNullMessage = notNullAnn.arguments.firstOrNull { it.name?.asString() == "message" }?.value as? String ?: ""
-                val groupsArg = notNullAnn.arguments.firstOrNull { notNullAnn.arguments.isNotEmpty() && it.name?.asString() == "groups" }?.value as? List<*>
+                notNullMessage = notNullAnn.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_MESSAGE }?.value as? String ?: ""
+                val groupsArg = notNullAnn.arguments.firstOrNull { notNullAnn.arguments.isNotEmpty() && it.name?.asString() == ValixAnnotationNames.PARAM_GROUPS }?.value as? List<*>
                 if (groupsArg != null) {
                     for (g in groupsArg) {
                         if (g is KSType) {
@@ -374,13 +374,13 @@ class ValixProcessor(
 
                     propertyBlock.beginControlFlow("if (%L == null)", valName)
                     propertyBlock.beginControlFlow("if (%L)", groupCheck)
-                    val resolvedMessageKey = notNullAnn!!.arguments.firstOrNull { it.name?.asString() == "messageKey" }?.value as? String ?: ""
+                    val resolvedMessageKey = notNullAnn!!.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_MESSAGE_KEY }?.value as? String ?: ""
                     val finalMessageKey = resolvedMessageKey.ifEmpty { "valix.notnull" }
                     val rejectedValueExpr = if (sensitiveMask != null) CodeBlock.of("%S", sensitiveMask) else CodeBlock.of("null")
                     propertyBlock.addStatement(
                         "errors.add(%T(field = %S, code = %S, message = %S, messageKey = %S, rejectedValue = %L, constraint = %S, path = %S))",
                         ClassName("io.valix.core", "ValidationError"),
-                        propName, "NOT_NULL", finalMsg, finalMessageKey, rejectedValueExpr, "io.valix.annotations.NotNull", propName
+                        propName, "NOT_NULL", finalMsg, finalMessageKey, rejectedValueExpr, ValixAnnotationNames.NOT_NULL, propName
                     )
                     propertyBlock.endControlFlow()
                     propertyBlock.nextControlFlow("else")
@@ -480,7 +480,7 @@ class ValixProcessor(
 
         val originatingFiles = classDecl.containingFile?.let { arrayOf(it) } ?: emptyArray()
         val dependencies = Dependencies(aggregating = false, *originatingFiles)
-
+        
         // File 1: classNameValidator.kt
         val fileSpec1 = FileSpec.builder(generatedPackageName, validatorName)
             .addType(validatorObject.build())
@@ -624,13 +624,13 @@ class ValixProcessor(
             val nullable = type.isMarkedNullable
 
             val notNullAnn = property.annotations.firstOrNull {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.NotNull"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.NOT_NULL
             }
             val hasNotNull = notNullAnn != null
             val required = !nullable || hasNotNull
 
             val docAnn = property.annotations.firstOrNull {
-                it.annotationType.resolve().declaration.qualifiedName?.asString() == "io.valix.annotations.ValixDoc"
+                it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.VALIX_DOC
             }
             val displayName = docAnn?.arguments?.firstOrNull { it.name?.asString() == "displayName" }?.value as? String ?: ""
             val description = docAnn?.arguments?.firstOrNull { it.name?.asString() == "description" }?.value as? String ?: ""
@@ -640,11 +640,11 @@ class ValixProcessor(
             val constraintsBlocks = mutableListOf<CodeBlock>()
 
             if (hasNotNull) {
-                val message = notNullAnn.arguments.firstOrNull { it.name?.asString() == "message" }?.value as? String ?: ""
-                val messageKey = notNullAnn.arguments.firstOrNull { it.name?.asString() == "messageKey" }?.value as? String ?: ""
+                val message = notNullAnn.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_MESSAGE }?.value as? String ?: ""
+                val messageKey = notNullAnn.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_MESSAGE_KEY }?.value as? String ?: ""
                 val resolvedMessageKey = messageKey.ifEmpty { "valix.notnull" }
                 val notNullGroups = mutableListOf<String>()
-                val groupsArg = notNullAnn.arguments.firstOrNull { it.name?.asString() == "groups" }?.value as? List<*>
+                val groupsArg = notNullAnn.arguments.firstOrNull { it.name?.asString() == ValixAnnotationNames.PARAM_GROUPS }?.value as? List<*>
                 if (groupsArg != null) {
                     for (g in groupsArg) {
                         if (g is KSType) {
@@ -662,7 +662,7 @@ class ValixProcessor(
                     CodeBlock.of(
                         "%T(annotationFqName = %S, constraintCode = %S, messageKey = %S, defaultMessage = %S, params = emptyMap(), groups = %L, isCustom = false, schemaKeyword = %T.REQUIRED)",
                         ClassName("io.valix.metadata", "ConstraintMetadata"),
-                        "io.valix.annotations.NotNull",
+                        ValixAnnotationNames.NOT_NULL,
                         "NOT_NULL",
                         resolvedMessageKey,
                         message.ifEmpty { "must not be null" },
@@ -785,7 +785,7 @@ class ValixProcessor(
         val paramsCode = CodeBlock.builder().add("mapOf(")
         val args = desc.annotation.arguments.filter {
             val name = it.name?.asString()
-            name != "message" && name != "messageKey" && name != "groups"
+            name != ValixAnnotationNames.PARAM_MESSAGE && name != ValixAnnotationNames.PARAM_MESSAGE_KEY && name != ValixAnnotationNames.PARAM_GROUPS
         }
         for (i in args.indices) {
             val arg = args[i]

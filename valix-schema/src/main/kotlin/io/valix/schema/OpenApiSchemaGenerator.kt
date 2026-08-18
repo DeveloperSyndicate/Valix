@@ -17,53 +17,52 @@ object OpenApiSchemaGenerator {
      * @return Formatted OpenAPI YAML component string.
      */
     fun generateComponent(metadata: ValixModelMetadata): String {
-        val sb = StringBuilder()
-        sb.append("${metadata.modelSimpleName}:\n")
-        sb.append("  type: object\n")
-        sb.append("  properties:\n")
+        return buildString {
+            append("${metadata.modelSimpleName}:\n")
+            append("  type: object\n")
+            append("  properties:\n")
 
-        val fields = metadata.fields
-        for (field in fields) {
-            sb.append("    ${field.name}:\n")
-            val openApiType = when (field.type) {
-                "kotlin.String" -> "string"
-                "kotlin.Int", "kotlin.Long", "kotlin.Short", "kotlin.Byte" -> "integer"
-                "kotlin.Double", "kotlin.Float" -> "number"
-                "kotlin.Boolean" -> "boolean"
-                else -> {
-                    if (field.type.startsWith("kotlin.collections.List") || 
-                        field.type.startsWith("kotlin.collections.Set") ||
-                        field.type.startsWith("kotlin.collections.Collection") ||
-                        field.type.contains("List") || field.type.contains("Set")) {
-                        "array"
-                    } else {
-                        "object"
+            val fields = metadata.fields
+            for (field in fields) {
+                append("    ${field.name}:\n")
+                val openApiType = when (field.type) {
+                    "kotlin.String" -> "string"
+                    "kotlin.Int", "kotlin.Long", "kotlin.Short", "kotlin.Byte" -> "integer"
+                    "kotlin.Double", "kotlin.Float" -> "number"
+                    "kotlin.Boolean" -> "boolean"
+                    else -> {
+                        if (field.type.startsWith("kotlin.collections.List") || 
+                            field.type.startsWith("kotlin.collections.Set") ||
+                            field.type.startsWith("kotlin.collections.Collection") ||
+                            field.type.contains("List") || field.type.contains("Set")) {
+                            "array"
+                        } else {
+                            "object"
+                        }
+                    }
+                }
+                append("      type: $openApiType\n")
+
+                if (field.description.isNotEmpty()) {
+                    append("      description: \"${escapeYaml(field.description)}\"\n")
+                }
+
+                for (constraint in field.constraints) {
+                    val mapping = mapConstraintToYaml(constraint)
+                    if (mapping.isNotEmpty()) {
+                        append("      $mapping\n")
                     }
                 }
             }
-            sb.append("      type: $openApiType\n")
 
-            if (field.description.isNotEmpty()) {
-                sb.append("      description: \"${escapeYaml(field.description)}\"\n")
-            }
-
-            for (constraint in field.constraints) {
-                val mapping = mapConstraintToYaml(constraint)
-                if (mapping.isNotEmpty()) {
-                    sb.append("      $mapping\n")
+            val requiredFields = fields.filter { it.required }.map { it.name }
+            if (requiredFields.isNotEmpty()) {
+                append("  required:\n")
+                for (req in requiredFields) {
+                    append("    - $req\n")
                 }
             }
         }
-
-        val requiredFields = fields.filter { it.required }.map { it.name }
-        if (requiredFields.isNotEmpty()) {
-            sb.append("  required:\n")
-            for (req in requiredFields) {
-                sb.append("    - $req\n")
-            }
-        }
-
-        return sb.toString()
     }
 
     private fun mapConstraintToYaml(constraint: ConstraintMetadata): String {

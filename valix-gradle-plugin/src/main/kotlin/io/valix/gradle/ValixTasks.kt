@@ -96,17 +96,18 @@ open class GenerateValixOpenApiTask : BaseValixTask() {
             val generatorInstance = generatorClass.getField("INSTANCE").get(null)
             val generateMethod = generatorClass.getMethod("generateComponent", modelMetadataClass)
 
-            val sb = StringBuilder()
-            sb.append("components:\n")
-            sb.append("  schemas:\n")
+            val jsonString = buildString {
+                append("components:\n")
+                append("  schemas:\n")
 
-            for (metadata in metadataList) {
-                val yaml = generateMethod.invoke(generatorInstance, metadata) as String
-                val indentedYaml = yaml.lines().joinToString("\n") { "    $it" }
-                sb.append(indentedYaml).append("\n")
+                for (metadata in metadataList) {
+                    val yaml = generateMethod.invoke(generatorInstance, metadata) as String
+                    val indentedYaml = yaml.lines().joinToString("\n") { "    $it" }
+                    append(indentedYaml).append("\n")
+                }
             }
 
-            file.writeText(sb.toString())
+            file.writeText(jsonString)
             logger.lifecycle("Generated OpenAPI YAML components: ${file.absolutePath}")
         }
     }
@@ -141,65 +142,64 @@ open class GenerateValixDocsTask : BaseValixTask() {
         val fields = metadata.javaClass.getMethod("getFields").invoke(metadata) as List<*>
         val classConstraints = metadata.javaClass.getMethod("getClassConstraints").invoke(metadata) as List<*>
 
-        val sb = java.lang.StringBuilder()
-        sb.append("# Validation Documentation: $modelSimpleName\n\n")
-        sb.append("- **Class FQN**: `$modelFqName`\n\n")
+        return buildString {
+            append("# Validation Documentation: $modelSimpleName\n\n")
+            append("- **Class FQN**: `$modelFqName`\n\n")
 
-        if (fields.isNotEmpty()) {
-            sb.append("## Field Constraints\n\n")
-            sb.append("| Field | Type | Required | Display Name | Description | Constraints |\n")
-            sb.append("| --- | --- | --- | --- | --- | --- |\n")
-            for (field in fields.filterNotNull()) {
-                val name = field.javaClass.getMethod("getName").invoke(field) as String
-                val type = field.javaClass.getMethod("getType").invoke(field) as String
-                val required = field.javaClass.getMethod("getRequired").invoke(field) as Boolean
-                val displayName = field.javaClass.getMethod("getDisplayName").invoke(field) as String
-                val description = field.javaClass.getMethod("getDescription").invoke(field) as String
-                val constraints = field.javaClass.getMethod("getConstraints").invoke(field) as List<*>
+            if (fields.isNotEmpty()) {
+                append("## Field Constraints\n\n")
+                append("| Field | Type | Required | Display Name | Description | Constraints |\n")
+                append("| --- | --- | --- | --- | --- | --- |\n")
+                for (field in fields.filterNotNull()) {
+                    val name = field.javaClass.getMethod("getName").invoke(field) as String
+                    val type = field.javaClass.getMethod("getType").invoke(field) as String
+                    val required = field.javaClass.getMethod("getRequired").invoke(field) as Boolean
+                    val displayName = field.javaClass.getMethod("getDisplayName").invoke(field) as String
+                    val description = field.javaClass.getMethod("getDescription").invoke(field) as String
+                    val constraints = field.javaClass.getMethod("getConstraints").invoke(field) as List<*>
 
-                val constraintsStr = constraints.filterNotNull().joinToString("<br>") { constraint ->
+                    val constraintsStr = constraints.filterNotNull().joinToString("<br>") { constraint ->
+                        val code = constraint.javaClass.getMethod("getConstraintCode").invoke(constraint) as String
+                        val params = constraint.javaClass.getMethod("getParams").invoke(constraint) as Map<*, *>
+                        val msg = constraint.javaClass.getMethod("getDefaultMessage").invoke(constraint) as String
+                        val groups = constraint.javaClass.getMethod("getGroups").invoke(constraint) as List<*>
+                        
+                        var str = "**$code**"
+                        if (params.isNotEmpty()) {
+                            str += " (${params.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
+                        }
+                        str += " - *\"$msg\"*"
+                        if (groups.isNotEmpty()) {
+                            str += " (groups: ${groups.joinToString(", ")})"
+                        }
+                        str
+                    }
+
+                    append("| `$name` | `$type` | ${if (required) "Yes" else "No"} | $displayName | ${description.ifEmpty { "-" }} | ${constraintsStr.ifEmpty { "-" }} |\n")
+                }
+                append("\n")
+            }
+
+            if (classConstraints.isNotEmpty()) {
+                append("## Class Level Constraints\n\n")
+                for (constraint in classConstraints.filterNotNull()) {
                     val code = constraint.javaClass.getMethod("getConstraintCode").invoke(constraint) as String
                     val params = constraint.javaClass.getMethod("getParams").invoke(constraint) as Map<*, *>
                     val msg = constraint.javaClass.getMethod("getDefaultMessage").invoke(constraint) as String
                     val groups = constraint.javaClass.getMethod("getGroups").invoke(constraint) as List<*>
-                    
-                    var str = "**$code**"
+
+                    append("- **$code**")
                     if (params.isNotEmpty()) {
-                        str += " (${params.entries.joinToString(", ") { "${it.key}=${it.value}" }})"
+                        append(" (${params.entries.joinToString(", ") { "${it.key}=${it.value}" }})")
                     }
-                    str += " - *\"$msg\"*"
+                    append(" - *\"$msg\"*")
                     if (groups.isNotEmpty()) {
-                        str += " (groups: ${groups.joinToString(", ")})"
+                        append(" (groups: ${groups.joinToString(", ")})")
                     }
-                    str
+                    append("\n")
                 }
-
-                sb.append("| `$name` | `$type` | ${if (required) "Yes" else "No"} | $displayName | ${description.ifEmpty { "-" }} | ${constraintsStr.ifEmpty { "-" }} |\n")
-            }
-            sb.append("\n")
-        }
-
-        if (classConstraints.isNotEmpty()) {
-            sb.append("## Class Level Constraints\n\n")
-            for (constraint in classConstraints.filterNotNull()) {
-                val code = constraint.javaClass.getMethod("getConstraintCode").invoke(constraint) as String
-                val params = constraint.javaClass.getMethod("getParams").invoke(constraint) as Map<*, *>
-                val msg = constraint.javaClass.getMethod("getDefaultMessage").invoke(constraint) as String
-                val groups = constraint.javaClass.getMethod("getGroups").invoke(constraint) as List<*>
-
-                sb.append("- **$code**")
-                if (params.isNotEmpty()) {
-                    sb.append(" (${params.entries.joinToString(", ") { "${it.key}=${it.value}" }})")
-                }
-                sb.append(" - *\"$msg\"*")
-                if (groups.isNotEmpty()) {
-                    sb.append(" (groups: ${groups.joinToString(", ")})")
-                }
-                sb.append("\n")
             }
         }
-
-        return sb.toString()
     }
 }
 
@@ -221,19 +221,20 @@ open class GenerateValixMetadataTask : BaseValixTask() {
             val modelMetadataClass = classLoader.loadClass("io.valix.metadata.ValixModelMetadata")
             val toJsonMethod = serializationKtClass.getMethod("toJson", modelMetadataClass)
 
-            val sb = StringBuilder()
-            sb.append("[\n")
-            for (i in metadataList.indices) {
-                val metadata = metadataList[i]
-                val json = toJsonMethod.invoke(null, metadata) as String
-                val indentedJson = json.lines().joinToString("\n") { "  $it" }
-                sb.append(indentedJson)
-                if (i < metadataList.size - 1) sb.append(",")
-                sb.append("\n")
+            val jsonString = buildString {
+                append("[\n")
+                for (i in metadataList.indices) {
+                    val metadata = metadataList[i]
+                    val json = toJsonMethod.invoke(null, metadata) as String
+                    val indentedJson = json.lines().joinToString("\n") { "  $it" }
+                    append(indentedJson)
+                    if (i < metadataList.size - 1) append(",")
+                    append("\n")
+                }
+                append("]")
             }
-            sb.append("]")
 
-            file.writeText(sb.toString())
+            file.writeText(jsonString)
             logger.lifecycle("Generated combined Valix metadata JSON: ${file.absolutePath}")
         }
     }
