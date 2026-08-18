@@ -247,5 +247,12 @@ class RuleValidationTest {
         val ann = mockAnnotation("io.valix.annotations.FieldsMatch", mapOf("first" to "password", "second" to "confirmPassword"))
         assertTrue(io.valix.ksp.rules.FieldsMatchGenerator.validate(classDecl, ann, logger))
     }
+
+    @Test
+    fun testNotEmptyOnMapPasses() {
+        val prop = mockProperty("kotlin.collections.Map")
+        val ann = mockAnnotation("io.valix.annotations.NotEmpty")
+        assertTrue(io.valix.ksp.rules.NotEmptyRule.validate(prop, ann, logger))
+    }
 }
 
