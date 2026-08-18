@@ -143,11 +143,11 @@ plugins {
 ```kotlin
 dependencies {
     // Core annotations and runtime
-    implementation("com.developersyndicate.valix:valix-core:1.0.3")
-    implementation("com.developersyndicate.valix:valix-runtime:1.0.3")
+    implementation("com.developersyndicate.valix:valix-core:1.0.4")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.4")
 
     // KSP annotation processor
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.3")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.4")
 }
 ```
 
