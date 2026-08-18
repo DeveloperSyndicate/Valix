@@ -76,6 +76,33 @@ jobs:
             sed -i "s|<head>|<head>${SEO_META}|g" "$INDEX_FILE"
           fi
           
+          # Generate sitemap.xml dynamically
+          cat <<EOF > ./build/dokka/htmlMultiModule/sitemap.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://developersyndicate.github.io/Valix/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://developersyndicate.github.io/Valix/valix-core/index.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://developersyndicate.github.io/Valix/valix-spring/index.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://developersyndicate.github.io/Valix/valix-ktor/index.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>
+EOF
+
           touch ./build/dokka/htmlMultiModule/.nojekyll
 
       - name: Deploy Dokka Docs to GitHub Pages
