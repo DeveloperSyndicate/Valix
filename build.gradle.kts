@@ -57,7 +57,7 @@ subprojects {
                     developer {
                         id.set("sanjays")
                         name.set("Sanjay S")
-                        email.set("sanjay@developersyndicate.com")
+                        email.set("dev.sanjayofficial@outlook.com")
                         organization.set("Developer Syndicate")
                         organizationUrl.set("https://developersyndicate.com")
                     }
