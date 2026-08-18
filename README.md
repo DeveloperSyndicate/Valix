@@ -242,6 +242,9 @@ val UserValidator = valixDsl<DomainUser> {
 
 ## Documentation & AI Context
 
+* **[API Reference Documentation (Dokka Pages)](https://developersyndicate.github.io/Valix/)**
+* **[Medium Article: Building a Zero-Reflection Validation Engine in Kotlin](https://medium.com/@imsaba16/building-a-zero-reflection-validation-engine-in-kotlin-using-ksp-91a538badb65)**
+
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 * **[Architecture & Internals](docs/ARCHITECTURE.md)**: KSP processing pipeline, generated code structure, and multiplatform design.
