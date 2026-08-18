@@ -15,10 +15,12 @@ private fun isCollection(type: KSType): Boolean {
         "kotlin.collections.Set",
         "kotlin.collections.Collection",
         "kotlin.collections.Iterable",
+        "kotlin.collections.Map",
         "kotlin.collections.MutableList",
         "kotlin.collections.MutableSet",
         "kotlin.collections.MutableCollection",
-        "kotlin.collections.MutableIterable"
+        "kotlin.collections.MutableIterable",
+        "kotlin.collections.MutableMap"
     )
     val qName = type.declaration.qualifiedName?.asString()
     if (qName in collectionNames) return true
@@ -35,9 +37,11 @@ private fun isSubtypeOfCollection(type: KSType): Boolean {
         "kotlin.collections.Collection",
         "kotlin.collections.List",
         "kotlin.collections.Set",
+        "kotlin.collections.Map",
         "kotlin.collections.MutableCollection",
         "kotlin.collections.MutableList",
-        "kotlin.collections.MutableSet"
+        "kotlin.collections.MutableSet",
+        "kotlin.collections.MutableMap"
     )
     val qName = type.declaration.qualifiedName?.asString()
     if (qName in collectionNames) return true
@@ -57,7 +61,7 @@ private fun validateCollectionProperty(
     val property = target as? KSPropertyDeclaration
     if (property == null) {
         logger.error(
-            "@${annotation.shortName.asString()} can only be applied to List, Set, Collection, or Iterable properties",
+            "@${annotation.shortName.asString()} can only be applied to List, Set, Map, Collection, or Iterable properties",
             target
         )
         return false
@@ -65,7 +69,7 @@ private fun validateCollectionProperty(
     val type = property.type.resolve()
     if (!isCollection(type)) {
         logger.error(
-            "@${annotation.shortName.asString()} can only be applied to List, Set, Collection, or Iterable properties",
+            "@${annotation.shortName.asString()} can only be applied to List, Set, Map, Collection, or Iterable properties",
             target
         )
         return false
