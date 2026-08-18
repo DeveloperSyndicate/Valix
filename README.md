@@ -123,7 +123,7 @@ Microbenchmarks executed via Java Microbenchmark Harness (JMH) comparing Valix a
 
 ## Examples & Benchmarks
 
-For complete integration projects and real-time validation execution benchmarks of Valix across Spring Boot, Micronaut, and Android Jetpack Compose, check out the dedicated examples repository:
+For complete integration projects and real-time validation execution benchmarks of Valix across Spring Boot, Micronaut, Ktor, Kotlin Multiplatform (KMP), and Android Jetpack Compose, check out the dedicated examples repository:
 
 👉 **[DeveloperSyndicate/Valix-Examples](https://github.com/DeveloperSyndicate/Valix-Examples)**
 
