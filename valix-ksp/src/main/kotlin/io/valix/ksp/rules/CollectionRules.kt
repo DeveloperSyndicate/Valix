@@ -78,7 +78,7 @@ private fun validateCollectionProperty(
 }
 
 object NotEmptyRule : ConstraintGenerator {
-    override val annotationFqName = "io.valix.annotations.NotEmpty"
+    override val annotationFqName = io.valix.ksp.ValixAnnotationNames.NOT_EMPTY
     override val errorCode = "NOT_EMPTY"
     override val defaultMessage = "must not be empty"
 
@@ -98,7 +98,7 @@ object NotEmptyRule : ConstraintGenerator {
 }
 
 object SizeRule : ConstraintGenerator {
-    override val annotationFqName = "io.valix.annotations.Size"
+    override val annotationFqName = io.valix.ksp.ValixAnnotationNames.SIZE
     override val errorCode = "SIZE_INVALID"
     override val defaultMessage = "size must be in range"
 

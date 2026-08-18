@@ -809,16 +809,16 @@ class ValixProcessor(
         val isCustom = desc.validatorFqName != null
 
         val schemaKeywordVal = when (fqName) {
-            "io.valix.annotations.MinLength" -> "MIN_LENGTH"
-            "io.valix.annotations.MaxLength" -> "MAX_LENGTH"
-            "io.valix.annotations.Pattern" -> "PATTERN"
-            "io.valix.annotations.Email" -> "FORMAT_EMAIL"
-            "io.valix.annotations.Url" -> "FORMAT_URI"
-            "io.valix.annotations.Min" -> "MINIMUM"
-            "io.valix.annotations.Max" -> "MAXIMUM"
-            "io.valix.annotations.NotEmpty" -> "NOT_EMPTY"
-            "io.valix.annotations.Size" -> "CUSTOM"
-            "io.valix.annotations.AllowedValues" -> "ENUM_VALUES"
+            ValixAnnotationNames.MIN_LENGTH -> "MIN_LENGTH"
+            ValixAnnotationNames.MAX_LENGTH -> "MAX_LENGTH"
+            ValixAnnotationNames.PATTERN -> "PATTERN"
+            ValixAnnotationNames.EMAIL -> "FORMAT_EMAIL"
+            ValixAnnotationNames.URL -> "FORMAT_URI"
+            ValixAnnotationNames.MIN -> "MINIMUM"
+            ValixAnnotationNames.MAX -> "MAXIMUM"
+            ValixAnnotationNames.NOT_EMPTY -> "NOT_EMPTY"
+            ValixAnnotationNames.SIZE -> "CUSTOM"
+            ValixAnnotationNames.ALLOWED_VALUES -> "ENUM_VALUES"
             else -> "NONE"
         }
 
