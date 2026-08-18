@@ -68,6 +68,14 @@ jobs:
       - name: Generate Dokka Documentation
         run: |
           ./gradlew dokkaHtmlMultiModule --no-configuration-cache
+          
+          # Inject SEO metadata and JSON-LD structured schema to index.html header
+          INDEX_FILE="./build/dokka/htmlMultiModule/index.html"
+          if [ -f "$INDEX_FILE" ]; then
+            SEO_META='<meta name="description" content="Valix is a Kotlin validation framework powered by KSP that generates type-safe validation logic at compile time, enabling reflection-free validation at runtime."><script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"Valix","description":"Kotlin validation framework powered by KSP that generates type-safe validation logic at compile time.","programmingLanguage":"Kotlin","license":"https://spdx.org/licenses/Apache-2.0.html","codeRepository":"https://github.com/developersyndicate/valix"}</script>'
+            sed -i "s|<head>|<head>${SEO_META}|g" "$INDEX_FILE"
+          fi
+          
           touch ./build/dokka/htmlMultiModule/.nojekyll
 
       - name: Deploy Dokka Docs to GitHub Pages
