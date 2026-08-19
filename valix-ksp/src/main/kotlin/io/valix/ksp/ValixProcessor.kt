@@ -53,24 +53,33 @@ class ValixProcessor(
                 continue
             }
             val classDescriptors = ConstraintResolver.resolveClassConstraints(classDecl, resolver, logger)
+            val validClassDescriptors = classDescriptors.filter { descriptor ->
+                val generator = PluginRegistry.getGenerator(descriptor.annotationFqName)
+                generator == null || generator.validate(classDecl, descriptor.annotation, logger)
+            }
             val propertyDescriptors = mutableMapOf<KSPropertyDeclaration, List<ConstraintDescriptor>>()
 
             for (property in classDecl.getAllProperties()) {
                 val descriptors = ConstraintResolver.resolvePropertyConstraints(property, resolver, logger)
+                val validDescriptors = descriptors.filter { descriptor ->
+                    val generator = PluginRegistry.getGenerator(descriptor.annotationFqName)
+                    generator == null || generator.validate(property, descriptor.annotation, logger)
+                }
+                
                 val hasNotNull = property.annotations.any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.NOT_NULL
                 }
                 val hasValid = property.annotations.any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.VALID
                 }
-                if (descriptors.isNotEmpty() || hasNotNull || hasValid) {
-                    propertyDescriptors[property] = descriptors
+                if (validDescriptors.isNotEmpty() || hasNotNull || hasValid) {
+                    propertyDescriptors[property] = validDescriptors
                 }
             }
 
-            if (classDescriptors.isNotEmpty() || propertyDescriptors.isNotEmpty()) {
-                generateValidator(resolver, classDecl, classDescriptors, propertyDescriptors)
-                generateMetadata(classDecl, classDescriptors, propertyDescriptors)
+            if (validClassDescriptors.isNotEmpty() || propertyDescriptors.isNotEmpty()) {
+                generateValidator(resolver, classDecl, validClassDescriptors, propertyDescriptors)
+                generateMetadata(classDecl, validClassDescriptors, propertyDescriptors)
                 generatedClasses.add(classDecl)
             }
         }

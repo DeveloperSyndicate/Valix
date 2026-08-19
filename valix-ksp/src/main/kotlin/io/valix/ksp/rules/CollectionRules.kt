@@ -62,7 +62,7 @@ private fun validateCollectionProperty(
     if (property == null) {
         logger.error(
             "@${annotation.shortName.asString()} can only be applied to List, Set, Map, Collection, or Iterable properties",
-            target
+            annotation
         )
         return false
     }
@@ -70,7 +70,7 @@ private fun validateCollectionProperty(
     if (!isCollection(type)) {
         logger.error(
             "@${annotation.shortName.asString()} can only be applied to List, Set, Map, Collection, or Iterable properties",
-            target
+            annotation
         )
         return false
     }
@@ -113,15 +113,15 @@ object SizeRule : ConstraintGenerator {
         val min = annotation.arguments.firstOrNull { it.name?.asString() == "min" }?.value as? Int
         val max = annotation.arguments.firstOrNull { it.name?.asString() == "max" }?.value as? Int
         if (min == null || max == null) {
-            logger.error("@Size must specify min and max parameters", target)
+            logger.error("@Size must specify min and max parameters", annotation)
             return false
         }
         if (min < 0) {
-            logger.error("@Size min value must be non-negative", target)
+            logger.error("@Size min value must be non-negative", annotation)
             return false
         }
         if (max < min) {
-            logger.error("@Size max value cannot be less than min value", target)
+            logger.error("@Size max value cannot be less than min value", annotation)
             return false
         }
         return true
