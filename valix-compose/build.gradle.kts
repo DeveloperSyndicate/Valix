@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-    kotlin("plugin.compose") version "2.3.21"
+    kotlin("plugin.compose") version "2.4.10"
 }
 
 android {
@@ -29,5 +29,5 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.7.5")
     implementation("androidx.compose.material3:material3:1.3.1")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 }
