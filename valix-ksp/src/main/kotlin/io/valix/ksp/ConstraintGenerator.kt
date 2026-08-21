@@ -78,16 +78,16 @@ interface ConstraintGenerator {
         }
 
         val keyword = when (annotationFqName) {
-            "io.valix.annotations.MinLength" -> io.valix.metadata.SchemaKeyword.MIN_LENGTH
-            "io.valix.annotations.MaxLength" -> io.valix.metadata.SchemaKeyword.MAX_LENGTH
-            "io.valix.annotations.Pattern" -> io.valix.metadata.SchemaKeyword.PATTERN
-            "io.valix.annotations.Email" -> io.valix.metadata.SchemaKeyword.FORMAT_EMAIL
-            "io.valix.annotations.Url" -> io.valix.metadata.SchemaKeyword.FORMAT_URI
-            "io.valix.annotations.Min" -> io.valix.metadata.SchemaKeyword.MINIMUM
-            "io.valix.annotations.Max" -> io.valix.metadata.SchemaKeyword.MAXIMUM
-            "io.valix.annotations.NotEmpty" -> io.valix.metadata.SchemaKeyword.NOT_EMPTY
-            "io.valix.annotations.Size" -> io.valix.metadata.SchemaKeyword.CUSTOM
-            "io.valix.annotations.AllowedValues" -> io.valix.metadata.SchemaKeyword.ENUM_VALUES
+            ValixAnnotationNames.MIN_LENGTH -> io.valix.metadata.SchemaKeyword.MIN_LENGTH
+            ValixAnnotationNames.MAX_LENGTH -> io.valix.metadata.SchemaKeyword.MAX_LENGTH
+            ValixAnnotationNames.PATTERN -> io.valix.metadata.SchemaKeyword.PATTERN
+            ValixAnnotationNames.EMAIL -> io.valix.metadata.SchemaKeyword.FORMAT_EMAIL
+            ValixAnnotationNames.URL -> io.valix.metadata.SchemaKeyword.FORMAT_URI
+            ValixAnnotationNames.MIN -> io.valix.metadata.SchemaKeyword.MINIMUM
+            ValixAnnotationNames.MAX -> io.valix.metadata.SchemaKeyword.MAXIMUM
+            ValixAnnotationNames.NOT_EMPTY -> io.valix.metadata.SchemaKeyword.NOT_EMPTY
+            ValixAnnotationNames.SIZE -> io.valix.metadata.SchemaKeyword.CUSTOM
+            ValixAnnotationNames.ALLOWED_VALUES -> io.valix.metadata.SchemaKeyword.ENUM_VALUES
             else -> io.valix.metadata.SchemaKeyword.NONE
         }
 

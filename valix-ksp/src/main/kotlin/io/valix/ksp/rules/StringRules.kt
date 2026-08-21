@@ -24,7 +24,7 @@ private fun validateStringProperty(
     if (property == null || !isStringType(property)) {
         logger.error(
             "@${annotation.shortName.asString()} can only be applied to String or String? properties",
-            target
+            annotation
         )
         return false
     }
@@ -82,7 +82,7 @@ object MinLengthRule : ConstraintGenerator {
         if (!validateStringProperty(target, annotation, logger)) return false
         val value = annotation.arguments.firstOrNull { it.name?.asString() == "value" }?.value as? Int
         if (value == null || value < 0) {
-            logger.error("@MinLength value must be a non-negative integer", target)
+            logger.error("@MinLength value must be a non-negative integer", annotation)
             return false
         }
         return true
@@ -108,7 +108,7 @@ object MaxLengthRule : ConstraintGenerator {
         if (!validateStringProperty(target, annotation, logger)) return false
         val value = annotation.arguments.firstOrNull { it.name?.asString() == "value" }?.value as? Int
         if (value == null || value < 0) {
-            logger.error("@MaxLength value must be a non-negative integer", target)
+            logger.error("@MaxLength value must be a non-negative integer", annotation)
             return false
         }
         return true
@@ -129,7 +129,7 @@ object PatternRule : ConstraintGenerator {
         if (!validateStringProperty(target, annotation, logger)) return false
         val regexp = annotation.arguments.firstOrNull { it.name?.asString() == "regexp" || it.name?.asString() == "value" }?.value as? String
         if (regexp == null) {
-            logger.error("@Pattern must specify a regular expression", target)
+            logger.error("@Pattern must specify a regular expression", annotation)
             return false
         }
         return true

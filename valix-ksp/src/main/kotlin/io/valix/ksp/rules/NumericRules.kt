@@ -28,7 +28,7 @@ private fun validateNumericProperty(
     if (property == null || !isNumericType(property)) {
         logger.error(
             "@${annotation.shortName.asString()} can only be applied to Int, Long, Float, Double, or Short properties",
-            target
+            annotation
         )
         return false
     }
@@ -65,7 +65,7 @@ object MinRule : ConstraintGenerator {
         if (!validateNumericProperty(target, annotation, logger)) return false
         val value = annotation.arguments.firstOrNull { it.name?.asString() == "value" }?.value as? Long
         if (value == null) {
-            logger.error("@Min must specify a value parameter", target)
+            logger.error("@Min must specify a value parameter", annotation)
             return false
         }
         return true
@@ -101,7 +101,7 @@ object MaxRule : ConstraintGenerator {
         if (!validateNumericProperty(target, annotation, logger)) return false
         val value = annotation.arguments.firstOrNull { it.name?.asString() == "value" }?.value as? Long
         if (value == null) {
-            logger.error("@Max must specify a value parameter", target)
+            logger.error("@Max must specify a value parameter", annotation)
             return false
         }
         return true
@@ -203,11 +203,11 @@ object RangeRule : ConstraintGenerator {
         val min = annotation.arguments.firstOrNull { it.name?.asString() == "min" }?.value as? Long
         val max = annotation.arguments.firstOrNull { it.name?.asString() == "max" }?.value as? Long
         if (min == null || max == null) {
-            logger.error("@Range must specify min and max parameters", target)
+            logger.error("@Range must specify min and max parameters", annotation)
             return false
         }
         if (min > max) {
-            logger.error("@Range min value cannot be greater than max value", target)
+            logger.error("@Range min value cannot be greater than max value", annotation)
             return false
         }
         return true

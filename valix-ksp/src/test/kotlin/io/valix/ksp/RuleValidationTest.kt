@@ -68,7 +68,7 @@ class RuleValidationTest {
         val prop = mockProperty("kotlin.Int")
         val ann = mockAnnotation("io.valix.annotations.MinLength", mapOf("value" to 5))
         assertFalse(MinLengthRule.validate(prop, ann, logger))
-        verify(logger).error(eq("@MinLength can only be applied to String or String? properties"), eq(prop))
+        verify(logger).error(eq("@MinLength can only be applied to String or String? properties"), eq(ann))
     }
 
     @Test
@@ -83,7 +83,7 @@ class RuleValidationTest {
         val prop = mockProperty("kotlin.String")
         val ann = mockAnnotation("io.valix.annotations.Positive")
         assertFalse(PositiveRule.validate(prop, ann, logger))
-        verify(logger).error(eq("@Positive can only be applied to Int, Long, Float, Double, or Short properties"), eq(prop))
+        verify(logger).error(eq("@Positive can only be applied to Int, Long, Float, Double, or Short properties"), eq(ann))
     }
 
     @Test
@@ -98,7 +98,7 @@ class RuleValidationTest {
         val prop = mockProperty("kotlin.Boolean")
         val ann = mockAnnotation("io.valix.annotations.Past")
         assertFalse(PastRule.validate(prop, ann, logger))
-        verify(logger).error(eq("@Past can only be applied to LocalDate, LocalDateTime, Instant, or OffsetDateTime properties"), eq(prop))
+        verify(logger).error(eq("@Past can only be applied to LocalDate, LocalDateTime, Instant, or OffsetDateTime properties"), eq(ann))
     }
 
     @Test
@@ -106,7 +106,7 @@ class RuleValidationTest {
         val prop = mockProperty("kotlin.Int")
         val ann = mockAnnotation("io.valix.annotations.Range", mapOf("min" to 100L, "max" to 10L))
         assertFalse(RangeRule.validate(prop, ann, logger))
-        verify(logger).error(eq("@Range min value cannot be greater than max value"), eq(prop))
+        verify(logger).error(eq("@Range min value cannot be greater than max value"), eq(ann))
     }
 
     @Test
@@ -121,7 +121,7 @@ class RuleValidationTest {
         val prop = mockProperty("kotlin.collections.List")
         val ann = mockAnnotation("io.valix.annotations.Size", mapOf("min" to 10, "max" to 2))
         assertFalse(SizeRule.validate(prop, ann, logger))
-        verify(logger).error(eq("@Size max value cannot be less than min value"), eq(prop))
+        verify(logger).error(eq("@Size max value cannot be less than min value"), eq(ann))
     }
 
     @Test
@@ -129,7 +129,7 @@ class RuleValidationTest {
         val prop = mockProperty("kotlin.collections.List")
         val ann = mockAnnotation("io.valix.annotations.Size", mapOf("min" to -1, "max" to 10))
         assertFalse(SizeRule.validate(prop, ann, logger))
-        verify(logger).error(eq("@Size min value must be non-negative"), eq(prop))
+        verify(logger).error(eq("@Size min value must be non-negative"), eq(ann))
     }
 
     @Test
@@ -246,6 +246,13 @@ class RuleValidationTest {
 
         val ann = mockAnnotation("io.valix.annotations.FieldsMatch", mapOf("first" to "password", "second" to "confirmPassword"))
         assertTrue(io.valix.ksp.rules.FieldsMatchGenerator.validate(classDecl, ann, logger))
+    }
+
+    @Test
+    fun testNotEmptyOnMapPasses() {
+        val prop = mockProperty("kotlin.collections.Map")
+        val ann = mockAnnotation("io.valix.annotations.NotEmpty")
+        assertTrue(io.valix.ksp.rules.NotEmptyRule.validate(prop, ann, logger))
     }
 }
 

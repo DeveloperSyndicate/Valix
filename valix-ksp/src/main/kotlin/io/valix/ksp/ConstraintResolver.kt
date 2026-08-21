@@ -105,23 +105,23 @@ object ConstraintResolver {
             if (validatorFqName != null) {
                 val validatorClassDecl = resolver.getClassDeclarationByName(resolver.getKSNameFromString(validatorFqName))
                 if (validatorClassDecl == null) {
-                    logger.error("Validator class '$validatorFqName' not found", errorNode)
+                    logger.error("Validator class '$validatorFqName' not found", ann)
                     continue
                 }
 
                 val interfaceInfo = findValidatorInterface(validatorClassDecl)
                 if (interfaceInfo == null) {
-                    logger.error("Validator class '$validatorFqName' must implement ConstraintValidator, ObjectConstraintValidator, or AsyncConstraintValidator", errorNode)
+                    logger.error("Validator class '$validatorFqName' must implement ConstraintValidator, ObjectConstraintValidator, or AsyncConstraintValidator", ann)
                     continue
                 }
                 isAsyncConstraint = interfaceInfo.isAsync
 
                 if (interfaceInfo.isObjectValidator && !isObjectLevel) {
-                    logger.error("Object-level validator '$validatorFqName' cannot be applied to a property", errorNode)
+                    logger.error("Object-level validator '$validatorFqName' cannot be applied to a property", ann)
                     continue
                 }
                 if (!interfaceInfo.isObjectValidator && isObjectLevel) {
-                    logger.error("Property validator '$validatorFqName' cannot be applied to a class", errorNode)
+                    logger.error("Property validator '$validatorFqName' cannot be applied to a class", ann)
                     continue
                 }
 
@@ -130,9 +130,9 @@ object ConstraintResolver {
                 val targetNotNullable = targetType.makeNotNullable()
                 if (!expectedNotNullable.isAssignableFrom(targetNotNullable)) {
                     if (isObjectLevel) {
-                        logger.error("Validator '$validatorFqName' expects type '${interfaceInfo.expectedType}' but was applied to class '$targetType'", errorNode)
+                        logger.error("Validator '$validatorFqName' expects type '${interfaceInfo.expectedType}' but was applied to class '$targetType'", ann)
                     } else {
-                        logger.error("Validator '$validatorFqName' expects type '${interfaceInfo.expectedType}' but was applied to property of type '$targetType'", errorNode)
+                        logger.error("Validator '$validatorFqName' expects type '${interfaceInfo.expectedType}' but was applied to property of type '$targetType'", ann)
                     }
                     continue
                 }
