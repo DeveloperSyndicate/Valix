@@ -60,3 +60,10 @@ When submitting code changes:
 * **Zero Reflection:** Ensure that new validator rules and generated files do not invoke runtime Java/Kotlin reflection APIs. Use build-time KSP parsing and direct property access.
 * **KMP Compatibility:** Core libraries must target Kotlin Multiplatform. Do not import Java-specific dependencies (such as `java.util.*`) inside the `valix-core` or `valix-runtime` modules unless they are placed in JVM-specific source sets.
 * **Keep KDocs Updated:** Document public interfaces and classes using standard Kotlin KDoc structures, specifying clear compile-time and runtime execution scopes.
+
+---
+
+## 5. Code of Conduct
+
+All contributors and participants in the Valix project are expected to adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) (Contributor Covenant v2.1). Please report any unacceptable behavior to [dev.sanjayofficial@outlook.com](mailto:dev.sanjayofficial@outlook.com).
+
