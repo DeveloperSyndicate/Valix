@@ -7,6 +7,7 @@ plugins {
     id("com.android.library") version "9.1.1" apply false
     id("org.jetbrains.dokka") version "1.9.20"
     id("com.vanniktech.maven.publish") version "0.29.0" apply false
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 allprojects {
@@ -15,6 +16,23 @@ allprojects {
 }
 
 subprojects {
+    apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    detekt {
+        buildUponDefaultConfig = true
+        parallel = true
+        config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    }
+
+    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+        reports {
+            html.required.set(true)
+            xml.required.set(true)
+            sarif.required.set(true)
+            txt.required.set(false)
+        }
+    }
+
     val publishableModules = setOf(
         "valix-annotations",
         "valix-core",
