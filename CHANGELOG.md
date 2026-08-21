@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] (v1.0.5)
+## [1.0.5] - 2026-08-21
 
 ### Added
 - **Multi-Dimensional Collections & Map Traversals**: Recursive generic type traversal in `ValixProcessor` supporting nested collections (e.g. `grid[0][1].value`) and maps (e.g. `meta['key'].value`).
