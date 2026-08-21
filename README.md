@@ -6,8 +6,10 @@
 
 Compile-time generated validation logic for Kotlin. Zero reflection. Generated Kotlin code.
 
-[![Build Status](https://github.com/developersyndicate/valix/actions/workflows/publish.yml/badge.svg)](https://github.com/developersyndicate/valix/actions/workflows/publish.yml)
+[![CI Build Status](https://github.com/developersyndicate/valix/actions/workflows/ci.yml/badge.svg)](https://github.com/developersyndicate/valix/actions/workflows/ci.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/com.developersyndicate.valix/valix-core.svg)](https://search.maven.org/artifact/com.developersyndicate.valix/valix-core)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![KMP](https://img.shields.io/badge/Platform-JVM%20%7C%20Android%20%7C%20iOS%20%7C%20JS%20%7C%20Wasm-blue)](https://kotlinlang.org/docs/multiplatform.html)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 Valix uses **Kotlin Symbol Processing (KSP)** to generate type-safe validators at compile time—delivering reflection-free validation with zero runtime overhead and zero cold-start delay.
@@ -241,6 +243,15 @@ val UserValidator = valixDsl<DomainUser> {
 
 ### Collection & Enum Constraints
 `@NotEmpty`, `@Size(min, max)`, `@AllowedValues(array)`.
+
+---
+
+## ProGuard & R8 Compatibility
+
+Because Valix generates direct procedural Kotlin code at build time, it performs **zero runtime reflection**:
+* **No Keep Rules Required**: You do not need to add `-keep` rules for your validated data classes or validator classes.
+* **Full Code Shrinking & Obfuscation**: R8/ProGuard can safely obfuscate, shrink, and optimize both your models and generated validator classes without breaking validation at runtime.
+* **Zero Configuration**: No `consumer-rules.pro` file is required.
 
 ---
 
