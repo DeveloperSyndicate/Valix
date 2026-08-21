@@ -37,6 +37,14 @@ subprojects {
         apply(plugin = "org.jetbrains.dokka")
         apply(plugin = "com.vanniktech.maven.publish")
 
+        tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
+            pluginsMapConfiguration.set(
+                mapOf(
+                    "org.jetbrains.dokka.base.DokkaBase" to """{ "footerMessage": "© 2026 Copyright Developer Syndicate" }"""
+                )
+            )
+        }
+
         configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
             publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
             signAllPublications()
@@ -70,4 +78,12 @@ subprojects {
             }
         }
     }
+}
+
+tasks.withType<org.jetbrains.dokka.gradle.DokkaMultiModuleTask>().configureEach {
+    pluginsMapConfiguration.set(
+        mapOf(
+            "org.jetbrains.dokka.base.DokkaBase" to """{ "footerMessage": "© 2026 Copyright Developer Syndicate" }"""
+        )
+    )
 }

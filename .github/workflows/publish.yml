@@ -88,6 +88,12 @@ jobs:
         run: |
           ./gradlew dokkaHtmlMultiModule --no-configuration-cache
           
+          # Replace Dokka default Kotlin logo with Valix logo
+          if [ -f "images/logo.png" ]; then
+            cp images/logo.png ./build/dokka/htmlMultiModule/images/logo-icon.svg
+            cp images/logo.png ./build/dokka/htmlMultiModule/images/logo.png
+          fi
+          
           # Inject SEO metadata and JSON-LD structured schema to index.html header
           INDEX_FILE="./build/dokka/htmlMultiModule/index.html"
           if [ -f "$INDEX_FILE" ]; then
@@ -130,6 +136,6 @@ EOF
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/dokka/htmlMultiModule
           publish_branch: gh-pages
-          commit_message: "docs: publish Dokka API documentation for version ${{ steps.get_version.outputs.VERSION }}"
+          commit_message: "docs: publish Dokka API documentation for version ${{ steps.release_info.outputs.VERSION }}"
 
 
