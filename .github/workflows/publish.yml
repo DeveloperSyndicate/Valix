@@ -37,17 +37,36 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
 
-      - name: Extract Version
-        id: get_version
+      - name: Extract Version and Release Notes
+        id: release_info
         run: |
           VERSION=$(grep -E 'version = "[^"]+"' build.gradle.kts | head -n 1 | sed -E 's/.*version = "([^"]+)".*/\1/')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Extract release notes from CHANGELOG.md for the current version
+          python3 -c "
+          import re
+          version = '$VERSION'
+          try:
+              with open('CHANGELOG.md') as f:
+                  content = f.read()
+              pattern = rf'##\s*\[(?:Unreleased\]\s*\(v{re.escape(version)}\)|{re.escape(version)}\])(?:[^\n]*)\n(.*?)(?=\n---\s*\n##\s*\[|\n##\s*\[|\Z)'
+              match = re.search(pattern, content, re.DOTALL)
+              notes = match.group(1).strip() if match else ''
+              if not notes:
+                  notes = f'Automated release of version {version} published to Maven Central.'
+          except Exception as e:
+              notes = f'Automated release of version {version} published to Maven Central.'
+          
+          with open('release_notes.txt', 'w') as out:
+              out.write(notes)
+          "
 
       - name: Create Git Tag and GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG_NAME="v${{ steps.get_version.outputs.VERSION }}"
+          TAG_NAME="v${{ steps.release_info.outputs.VERSION }}"
           
           # Check if tag already exists in the remote repository
           if git ls-remote --tags origin | grep -q "refs/tags/$TAG_NAME"; then
@@ -62,7 +81,7 @@ jobs:
             
             gh release create $TAG_NAME \
               --title "Release $TAG_NAME" \
-              --notes "Automated release of version ${{ steps.get_version.outputs.VERSION }} published to Maven Central."
+              --notes-file release_notes.txt
           fi
 
       - name: Generate Dokka Documentation
