@@ -1,9 +1,15 @@
 # Valix
 
-Compile-time validation for Kotlin. Zero reflection. Generated Kotlin code.
+<p align="center">
+  <img src="images/logo.png" alt="Valix Logo" width="160px">
+</p>
 
-[![Build Status](https://github.com/developersyndicate/valix/actions/workflows/publish.yml/badge.svg)](https://github.com/developersyndicate/valix/actions/workflows/publish.yml)
+Compile-time generated validation logic for Kotlin. Zero reflection. Generated Kotlin code.
+
+[![CI Build Status](https://github.com/developersyndicate/valix/actions/workflows/ci.yml/badge.svg)](https://github.com/developersyndicate/valix/actions/workflows/ci.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/com.developersyndicate.valix/valix-core.svg)](https://search.maven.org/artifact/com.developersyndicate.valix/valix-core)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![KMP](https://img.shields.io/badge/Platform-JVM%20%7C%20Android%20%7C%20iOS%20%7C%20JS%20%7C%20Wasm-blue)](https://kotlinlang.org/docs/multiplatform.html)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 Valix uses **Kotlin Symbol Processing (KSP)** to generate type-safe validators at compile time—delivering reflection-free validation with zero runtime overhead and zero cold-start delay.
@@ -143,11 +149,11 @@ plugins {
 ```kotlin
 dependencies {
     // Core annotations and runtime
-    implementation("com.developersyndicate.valix:valix-core:1.0.4")
-    implementation("com.developersyndicate.valix:valix-runtime:1.0.4")
+    implementation("com.developersyndicate.valix:valix-core:1.0.5")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.5")
 
     // KSP annotation processor
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.4")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.5")
 }
 ```
 
@@ -240,13 +246,25 @@ val UserValidator = valixDsl<DomainUser> {
 
 ---
 
+## ProGuard & R8 Compatibility
+
+Because Valix generates direct procedural Kotlin code at build time, it performs **zero runtime reflection**:
+* **No Keep Rules Required**: You do not need to add `-keep` rules for your validated data classes or validator classes.
+* **Full Code Shrinking & Obfuscation**: R8/ProGuard can safely obfuscate, shrink, and optimize both your models and generated validator classes without breaking validation at runtime.
+* **Zero Configuration**: No `consumer-rules.pro` file is required.
+
+---
+
 ## Documentation & AI Context
 
 * **[API Reference Documentation (Dokka Pages)](https://developersyndicate.github.io/Valix/)**
 * **[Medium Article: Building a Zero-Reflection Validation Engine in Kotlin](https://medium.com/@imsaba16/building-a-zero-reflection-validation-engine-in-kotlin-using-ksp-91a538badb65)**
+* **[Medium Article: Can Compile-Time Generated Validation Really Be Faster?](https://medium.com/@imsaba16/can-compile-time-generated-validation-really-be-faster-f2d659c06040)**
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
+* **[Frequently Asked Questions](docs/FAQ.md)**: Runtime validation boundaries, reflection details, and platform compatibility.
+* **[Valix vs. Hibernate Validator Comparison](docs/COMPARISON.md)**: Factual architectural comparison and use cases.
 * **[Architecture & Internals](docs/ARCHITECTURE.md)**: KSP processing pipeline, generated code structure, and multiplatform design.
 * **[Developer Cheatsheet](docs/CHEATSHEET.md)**: Annotation quick reference and feature summary.
 * **[Advanced Features](docs/ADVANCED.md)**: `@Sensitive`, `@ValidateIf`, `failFast`, schema export, and `valixDsl`.
@@ -264,18 +282,4 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 ## License
 
-```text
-Copyright 2026 Developer Syndicate
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+Valix is open-source software licensed under the [Apache 2.0 License](LICENSE).

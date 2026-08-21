@@ -1,0 +1,51 @@
+build:
+  maxIssues: 0
+
+naming:
+  FunctionNaming:
+    active: true
+    functionPattern: '^[a-zA-Z][a-zA-Z0-9]*$'
+  VariableNaming:
+    active: false
+  MatchingDeclarationName:
+    active: false
+
+style:
+  WildcardImport:
+    active: false
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: false
+  UnusedPrivateProperty:
+    active: false
+  UnusedParameter:
+    active: false
+  MaxLineLength:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+
+performance:
+  SpreadOperator:
+    active: false
+
+exceptions:
+  SwallowedException:
+    active: false
+  TooGenericExceptionCaught:
+    active: false
+
+complexity:
+  LongMethod:
+    active: false
+  LargeClass:
+    active: false
+  LongParameterList:
+    active: false
+  CyclomaticComplexMethod:
+    active: false
+  NestedBlockDepth:
+    active: false
+  ComplexCondition:
+    active: false

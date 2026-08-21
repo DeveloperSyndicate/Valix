@@ -3,10 +3,8 @@ package io.valix.core
 import kotlin.reflect.KClass
 
 /**
- * Main contract for compiled Valix validators.
- *
- * Implementations of this interface are generated at compile time by KSP for classes
- * annotated with constraint annotations or custom validation logic.
+ * ValixValidator is a type-safe Kotlin validator interface. Implementations of this interface
+ * are generated at compile time by KSP to execute validations at runtime without reflection.
  *
  * @param T The type of the target object being validated.
  */

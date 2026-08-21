@@ -24,4 +24,16 @@ object ValixAnnotationNames {
     // Default values
     const val DEFAULT_SENSITIVE_MASK = "********"
     const val DEFAULT_METADATA_VERSION = "1.0.0"
+
+    // Built-in constraint annotations
+    const val MIN_LENGTH = "io.valix.annotations.MinLength"
+    const val MAX_LENGTH = "io.valix.annotations.MaxLength"
+    const val PATTERN = "io.valix.annotations.Pattern"
+    const val EMAIL = "io.valix.annotations.Email"
+    const val URL = "io.valix.annotations.Url"
+    const val MIN = "io.valix.annotations.Min"
+    const val MAX = "io.valix.annotations.Max"
+    const val NOT_EMPTY = "io.valix.annotations.NotEmpty"
+    const val SIZE = "io.valix.annotations.Size"
+    const val ALLOWED_VALUES = "io.valix.annotations.AllowedValues"
 }

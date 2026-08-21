@@ -27,7 +27,7 @@ private fun validateDateProperty(
     if (property == null || !isDateType(property)) {
         logger.error(
             "@${annotation.shortName.asString()} can only be applied to LocalDate, LocalDateTime, Instant, or OffsetDateTime properties",
-            target
+            annotation
         )
         return false
     }

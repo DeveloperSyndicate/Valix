@@ -1,0 +1,124 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - development
+      - 'feature/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+      - development
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-quality:
+    name: Code Quality & Lint (Detekt)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Detekt Static Analysis
+        run: ./gradlew detekt
+
+      - name: Upload Detekt SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: build/reports/detekt/merge.sarif
+          category: detekt
+
+      - name: Upload Detekt HTML Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: detekt-reports
+          path: '**/build/reports/detekt/'
+
+  build-and-test:
+    name: Build & Test (JVM & KSP)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compile Kotlin
+        run: ./gradlew compileKotlin
+
+      - name: Run Unit Tests & KSP Compiler Checks
+        run: ./gradlew test
+
+  kmp-multiplatform-check:
+    name: KMP Target Verification
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Check KMP Targets (iOS, JS, Wasm)
+        run: |
+          ./gradlew :valix-core:compileKotlinIosX64 \
+                    :valix-core:compileKotlinJs \
+                    :valix-core:compileKotlinWasmJs \
+                    :valix-runtime:compileKotlinIosX64 \
+                    :valix-runtime:compileKotlinJs \
+                    :valix-runtime:compileKotlinWasmJs
+
+  dokka-docs-check:
+    name: Dokka Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate Dokka Build
+        run: ./gradlew dokkaHtmlMultiModule --no-configuration-cache

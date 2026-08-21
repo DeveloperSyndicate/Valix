@@ -53,24 +53,33 @@ class ValixProcessor(
                 continue
             }
             val classDescriptors = ConstraintResolver.resolveClassConstraints(classDecl, resolver, logger)
+            val validClassDescriptors = classDescriptors.filter { descriptor ->
+                val generator = PluginRegistry.getGenerator(descriptor.annotationFqName)
+                generator == null || generator.validate(classDecl, descriptor.annotation, logger)
+            }
             val propertyDescriptors = mutableMapOf<KSPropertyDeclaration, List<ConstraintDescriptor>>()
 
             for (property in classDecl.getAllProperties()) {
                 val descriptors = ConstraintResolver.resolvePropertyConstraints(property, resolver, logger)
+                val validDescriptors = descriptors.filter { descriptor ->
+                    val generator = PluginRegistry.getGenerator(descriptor.annotationFqName)
+                    generator == null || generator.validate(property, descriptor.annotation, logger)
+                }
+                
                 val hasNotNull = property.annotations.any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.NOT_NULL
                 }
                 val hasValid = property.annotations.any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() == ValixAnnotationNames.VALID
                 }
-                if (descriptors.isNotEmpty() || hasNotNull || hasValid) {
-                    propertyDescriptors[property] = descriptors
+                if (validDescriptors.isNotEmpty() || hasNotNull || hasValid) {
+                    propertyDescriptors[property] = validDescriptors
                 }
             }
 
-            if (classDescriptors.isNotEmpty() || propertyDescriptors.isNotEmpty()) {
-                generateValidator(resolver, classDecl, classDescriptors, propertyDescriptors)
-                generateMetadata(classDecl, classDescriptors, propertyDescriptors)
+            if (validClassDescriptors.isNotEmpty() || propertyDescriptors.isNotEmpty()) {
+                generateValidator(resolver, classDecl, validClassDescriptors, propertyDescriptors)
+                generateMetadata(classDecl, validClassDescriptors, propertyDescriptors)
                 generatedClasses.add(classDecl)
             }
         }
@@ -109,6 +118,20 @@ class ValixProcessor(
         return classDecl.superTypes.any {
             val resolved = it.resolve()
             isCollection(resolved)
+        }
+    }
+    private fun isMap(type: KSType): Boolean {
+        val mapNames = setOf(
+            "kotlin.collections.Map",
+            "kotlin.collections.MutableMap"
+        )
+        val qName = type.declaration.qualifiedName?.asString()
+        if (qName in mapNames) return true
+
+        val classDecl = type.declaration as? KSClassDeclaration ?: return false
+        return classDecl.superTypes.any {
+            val resolved = it.resolve()
+            isMap(resolved)
         }
     }
 
@@ -295,45 +318,71 @@ class ValixProcessor(
 
             // Generate nested or collection @Valid checks
             if (hasValid) {
-                if (isCollectionType) {
-                    val elementType = type.arguments.firstOrNull()?.type?.resolve()
-                    val elementClass = elementType?.declaration as? KSClassDeclaration
-                    if (elementClass != null) {
-                        val elementValidatorCN = ClassName("${elementClass.packageName.asString()}.generated", "${elementClass.simpleName.asString()}Validator")
+                fun generateNestedValidation(
+                    builder: CodeBlock.Builder,
+                    currType: KSType,
+                    currValName: String,
+                    currPathFieldPrefix: String,
+                    currPathExpression: CodeBlock,
+                    depth: Int
+                ) {
+                    if (isCollection(currType)) {
+                        val elementType = currType.arguments.firstOrNull()?.type?.resolve() ?: return
+                        val indexVar = "idx$depth"
+                        val itemVar = "item$depth"
+                        builder.beginControlFlow("%L.forEachIndexed { %L, %L ->", currValName, indexVar, itemVar)
                         val isElementNullable = elementType.isMarkedNullable
-                        checksBuilder.beginControlFlow("%L.forEachIndexed { index, item ->", valName)
                         if (isElementNullable) {
-                            checksBuilder.beginControlFlow("if (item != null)")
+                            builder.beginControlFlow("if (%L != null)", itemVar)
                         }
-                        checksBuilder.addStatement("val itemResult = %T.validate(item, *groups)", elementValidatorCN)
-                        checksBuilder.beginControlFlow("itemResult.errors.forEach { error ->")
-                        checksBuilder.addStatement(
-                            "errors.add(%T(field = %S + index + %S + error.field, code = error.code, message = error.message, rejectedValue = error.rejectedValue, constraint = error.constraint, path = %S + index + %S + error.path))",
-                            ClassName("io.valix.core", "ValidationError"),
-                            "$propName[", "].",
-                            "$propName[", "]."
-                        )
-                        checksBuilder.endControlFlow()
+                        val nextPathFieldPrefix = "" // handled by path
+                        val nextPathExpr = CodeBlock.of("%L + \"[\" + %L + \"]\"", currPathExpression, indexVar)
+                        generateNestedValidation(builder, elementType, itemVar, nextPathFieldPrefix, nextPathExpr, depth + 1)
                         if (isElementNullable) {
-                            checksBuilder.endControlFlow()
+                            builder.endControlFlow()
                         }
-                        checksBuilder.endControlFlow()
-                    }
-                } else {
-                    val nestedClass = type.declaration as? KSClassDeclaration
-                    if (nestedClass != null) {
-                        val nestedValidatorCN = ClassName("${nestedClass.packageName.asString()}.generated", "${nestedClass.simpleName.asString()}Validator")
-                        checksBuilder.addStatement("val nestedResult = %T.validate(%L, *groups)", nestedValidatorCN, valName)
-                        checksBuilder.beginControlFlow("nestedResult.errors.forEach { error ->")
-                        checksBuilder.addStatement(
-                            "errors.add(%T(field = %S + error.field, code = error.code, message = error.message, rejectedValue = error.rejectedValue, constraint = error.constraint, path = %S + error.path))",
-                            ClassName("io.valix.core", "ValidationError"),
-                            "$propName.",
-                            "$propName."
-                        )
-                        checksBuilder.endControlFlow()
+                        builder.endControlFlow()
+                    } else if (isMap(currType)) {
+                        val valueType = currType.arguments.getOrNull(1)?.type?.resolve() ?: return
+                        val keyVar = "key$depth"
+                        val valueVar = "val$depth"
+                        builder.beginControlFlow("%L.forEach { (%L, %L) ->", currValName, keyVar, valueVar)
+                        val isValueNullable = valueType.isMarkedNullable
+                        if (isValueNullable) {
+                            builder.beginControlFlow("if (%L != null)", valueVar)
+                        }
+                        val nextPathFieldPrefix = "" // handled by path
+                        val nextPathExpr = CodeBlock.of("%L + \"['\" + %L + \"']\"", currPathExpression, keyVar)
+                        generateNestedValidation(builder, valueType, valueVar, nextPathFieldPrefix, nextPathExpr, depth + 1)
+                        if (isValueNullable) {
+                            builder.endControlFlow()
+                        }
+                        builder.endControlFlow()
+                    } else {
+                        val nestedClass = currType.declaration as? KSClassDeclaration
+                        if (nestedClass != null) {
+                            val nestedValidatorCN = ClassName("${nestedClass.packageName.asString()}.generated", "${nestedClass.simpleName.asString()}Validator")
+                            builder.addStatement("val nestedResult$depth = %T.validate(%L, *groups)", nestedValidatorCN, currValName)
+                            builder.beginControlFlow("nestedResult$depth.errors.forEach { error ->")
+                            builder.addStatement(
+                                "errors.add(%T(field = %L + \".\" + error.field, code = error.code, message = error.message, rejectedValue = error.rejectedValue, constraint = error.constraint, path = %L + \".\" + error.path))",
+                                ClassName("io.valix.core", "ValidationError"),
+                                currPathExpression,
+                                currPathExpression
+                            )
+                            builder.endControlFlow()
+                        }
                     }
                 }
+
+                generateNestedValidation(
+                    checksBuilder,
+                    type,
+                    valName,
+                    "",
+                    CodeBlock.of("%S", propName),
+                    0
+                )
             }
 
             val checksBody = checksBuilder.build()
@@ -769,16 +818,16 @@ class ValixProcessor(
         val isCustom = desc.validatorFqName != null
 
         val schemaKeywordVal = when (fqName) {
-            "io.valix.annotations.MinLength" -> "MIN_LENGTH"
-            "io.valix.annotations.MaxLength" -> "MAX_LENGTH"
-            "io.valix.annotations.Pattern" -> "PATTERN"
-            "io.valix.annotations.Email" -> "FORMAT_EMAIL"
-            "io.valix.annotations.Url" -> "FORMAT_URI"
-            "io.valix.annotations.Min" -> "MINIMUM"
-            "io.valix.annotations.Max" -> "MAXIMUM"
-            "io.valix.annotations.NotEmpty" -> "NOT_EMPTY"
-            "io.valix.annotations.Size" -> "CUSTOM"
-            "io.valix.annotations.AllowedValues" -> "ENUM_VALUES"
+            ValixAnnotationNames.MIN_LENGTH -> "MIN_LENGTH"
+            ValixAnnotationNames.MAX_LENGTH -> "MAX_LENGTH"
+            ValixAnnotationNames.PATTERN -> "PATTERN"
+            ValixAnnotationNames.EMAIL -> "FORMAT_EMAIL"
+            ValixAnnotationNames.URL -> "FORMAT_URI"
+            ValixAnnotationNames.MIN -> "MINIMUM"
+            ValixAnnotationNames.MAX -> "MAXIMUM"
+            ValixAnnotationNames.NOT_EMPTY -> "NOT_EMPTY"
+            ValixAnnotationNames.SIZE -> "CUSTOM"
+            ValixAnnotationNames.ALLOWED_VALUES -> "ENUM_VALUES"
             else -> "NONE"
         }
 

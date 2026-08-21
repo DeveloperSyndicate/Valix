@@ -7,14 +7,32 @@ plugins {
     id("com.android.library") version "9.1.1" apply false
     id("org.jetbrains.dokka") version "1.9.20"
     id("com.vanniktech.maven.publish") version "0.29.0" apply false
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 allprojects {
     group = "com.developersyndicate.valix"
-    version = "1.0.4"
+    version = "1.0.5"
 }
 
 subprojects {
+    apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    detekt {
+        buildUponDefaultConfig = true
+        parallel = true
+        config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    }
+
+    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+        reports {
+            html.required.set(true)
+            xml.required.set(true)
+            sarif.required.set(true)
+            txt.required.set(false)
+        }
+    }
+
     val publishableModules = setOf(
         "valix-annotations",
         "valix-core",
@@ -37,6 +55,14 @@ subprojects {
         apply(plugin = "org.jetbrains.dokka")
         apply(plugin = "com.vanniktech.maven.publish")
 
+        tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
+            pluginsMapConfiguration.set(
+                mapOf(
+                    "org.jetbrains.dokka.base.DokkaBase" to """{ "footerMessage": "© 2026 Copyright Developer Syndicate" }"""
+                )
+            )
+        }
+
         configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
             publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
             signAllPublications()
@@ -57,7 +83,7 @@ subprojects {
                     developer {
                         id.set("sanjays")
                         name.set("Sanjay S")
-                        email.set("sanjay@developersyndicate.com")
+                        email.set("dev.sanjayofficial@outlook.com")
                         organization.set("Developer Syndicate")
                         organizationUrl.set("https://developersyndicate.com")
                     }
@@ -70,4 +96,12 @@ subprojects {
             }
         }
     }
+}
+
+tasks.withType<org.jetbrains.dokka.gradle.DokkaMultiModuleTask>().configureEach {
+    pluginsMapConfiguration.set(
+        mapOf(
+            "org.jetbrains.dokka.base.DokkaBase" to """{ "footerMessage": "© 2026 Copyright Developer Syndicate" }"""
+        )
+    )
 }
