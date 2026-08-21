@@ -1,7 +1,7 @@
 plugins {
     id("com.android.library")
     id("com.google.devtools.ksp")
-    kotlin("plugin.compose") version "2.3.21"
+    kotlin("plugin.compose") version "2.4.10"
 }
 
 android {

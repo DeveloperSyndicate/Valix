@@ -10,10 +10,10 @@ dependencies {
     implementation(project(":valix-core"))
     implementation(project(":valix-localization"))
 
-    compileOnly("io.ktor:ktor-server-core:2.3.10")
+    compileOnly("io.ktor:ktor-server-core:3.5.2")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.ktor:ktor-server-test-host:2.3.10")
+    testImplementation("io.ktor:ktor-server-test-host:3.5.2")
 }
 
 tasks.test {
