@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm")
     id("com.google.devtools.ksp")
-    id("me.champeau.jmh") version "0.7.2"
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 kotlin {
@@ -16,7 +16,7 @@ dependencies {
     implementation(project(":valix-runtime"))
     ksp(project(":valix-ksp"))
 
-    implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
+    implementation("org.hibernate.validator:hibernate-validator:9.1.3.Final")
     implementation("org.glassfish:jakarta.el:4.0.2")
 
     // JMH dependencies
