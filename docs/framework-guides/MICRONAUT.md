@@ -40,12 +40,12 @@ plugins {
 
 dependencies {
     // Core runtime and Micronaut adapter dependencies
-    implementation("com.developersyndicate.valix:valix-core:1.0.5")
-    implementation("com.developersyndicate.valix:valix-runtime:1.0.5")
-    implementation("com.developersyndicate.valix:valix-micronaut:1.0.5")
+    implementation("com.developersyndicate.valix:valix-core:1.0.6")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.6")
+    implementation("com.developersyndicate.valix:valix-micronaut:1.0.6")
     
     // KSP generator
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.5")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.6")
 }
 ```
 
