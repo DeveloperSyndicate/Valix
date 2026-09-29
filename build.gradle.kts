@@ -34,14 +34,12 @@ subprojects {
     }
 
     val publishableModules = setOf(
-        "valix-annotations",
         "valix-core",
         "valix-ksp",
         "valix-runtime",
         "valix-flow",
         "valix-viewmodel",
         "valix-compose",
-        "valix-metadata",
         "valix-localization",
         "valix-schema",
         "valix-serialization",
