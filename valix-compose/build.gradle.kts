@@ -1,6 +1,6 @@
 plugins {
     id("com.android.library")
-    kotlin("plugin.compose") version "2.3.21"
+    kotlin("plugin.compose") version "2.4.20"
 }
 
 android {
