@@ -9,8 +9,8 @@ dependencies {
     implementation("com.squareup:kotlinpoet-ksp:2.2.0")
     
     testImplementation(kotlin("test"))
-    testImplementation("org.mockito:mockito-core:5.11.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito:mockito-core:5.24.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
 }
 
 kotlin {
