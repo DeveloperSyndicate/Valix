@@ -7,7 +7,7 @@
 
 - **Name**: Valix
 - **Package Group**: `com.developersyndicate.valix`
-- **Core Version**: `1.0.5`
+- **Core Version**: `1.0.6`
 - **Primary Mechanism**: KSP (Kotlin Symbol Processing) compile-time generated validation logic.
 - **Execution Overhead**: Zero reflection. Procedural bytecode.
 - **Multiplatform Support**: JVM, Android, iOS (`iosArm64`, `iosX64`, `iosSimulatorArm64`), Web (JS), and WebAssembly (Wasm).

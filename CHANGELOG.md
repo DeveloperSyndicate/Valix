@@ -7,16 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [1.0.6] - 2026-09-29
 
 ### Added
-- **Dokka Brand Assets**: Added native SVG vector asset `images/logo-icon.svg` and configured `customAssets` in DokkaBase plugin settings across root and subprojects.
-- **Build Performance Optimizations**: Enabled Gradle parallel task execution, build caching, and file system watching in `gradle.properties`.
+- **Dokka Vector Brand Assets**: Added native SVG vector asset `images/logo-icon.svg` with proper XML namespaces and `viewBox`.
+- **Dokka Base Custom Assets Configuration**: Configured `customAssets` in `DokkaBase` plugin settings across root and subproject tasks in `build.gradle.kts` for consistent documentation asset packaging during local and CI builds.
+- **Build Performance Optimizations**: Enabled Gradle parallel task execution (`org.gradle.parallel=true`), build caching (`org.gradle.caching=true`), and daemon file system watching (`org.gradle.vfs.watch=true`) in `gradle.properties`.
 
 ### Fixed
-- **Documentation Logo & Favicon**: Resolved missing icon issue in Dokka navigation header and browser tabs caused by invalid MIME-type delivery on GitHub Pages.
-- **Git Tracking Hygiene**: Untracked user-specific `local.properties` from repository index and added it to `.gitignore`.
-- **Dependabot Update Governance**: Restructured Dependabot configuration to isolate high-risk major version upgrades (Kotlin, Dokka, server frameworks) and route update PRs to `development`.
+- **Documentation Logo & Favicon**: Resolved empty/broken logo icon in Dokka navigation header and browser tabs by eliminating binary PNG-to-SVG filename copying in `publish.yml`, restoring valid `image/svg+xml` MIME-type rendering on GitHub Pages.
+- **Git Tracking Hygiene**: Untracked machine-specific `local.properties` from the repository index and updated `.gitignore` with `local.properties` and `*.properties.local`.
+- **Dependabot Update Governance**: Restructured Dependabot configuration to isolate high-risk major version upgrades (Kotlin compiler, KSP, Dokka 2.x, Spring Boot 4, Ktor 3, Micronaut 5), added granular update groups, and routed pull requests to `development`.
 
 ---
 
