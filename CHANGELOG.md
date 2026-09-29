@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Dokka Brand Assets**: Added native SVG vector asset `images/logo-icon.svg` and configured `customAssets` in DokkaBase plugin settings across root and subprojects.
+- **Build Performance Optimizations**: Enabled Gradle parallel task execution, build caching, and file system watching in `gradle.properties`.
+
+### Fixed
+- **Documentation Logo & Favicon**: Resolved missing icon issue in Dokka navigation header and browser tabs caused by invalid MIME-type delivery on GitHub Pages.
+- **Git Tracking Hygiene**: Untracked user-specific `local.properties` from repository index and added it to `.gitignore`.
+- **Dependabot Update Governance**: Restructured Dependabot configuration to isolate high-risk major version upgrades (Kotlin, Dokka, server frameworks) and route update PRs to `development`.
+
+---
+
 ## [1.0.5] - 2026-08-21
 
 ### Added
