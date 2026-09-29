@@ -20,11 +20,44 @@ updates:
     target-branch: "development"
     schedule:
       interval: "weekly"
-    groups:
-      gradle-dependencies:
-        patterns:
-          - "*"
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "gradle"
+    groups:
+      test-dependencies:
+        patterns:
+          - "org.mockito*"
+      kotlinx-libraries:
+        patterns:
+          - "org.jetbrains.kotlinx*"
+      code-quality:
+        patterns:
+          - "io.gitlab.arturbosch.detekt*"
+
+    # Ignore breaking major version leaps that require code migrations
+    ignore:
+      # Dokka 2.x requires full migration of Dokka Gradle tasks in build.gradle.kts
+      - dependency-name: "org.jetbrains.dokka"
+        update-types: ["version-update:semver-major"]
+
+      # Kotlin compiler must be updated in lockstep with matching KSP release
+      - dependency-name: "jvm"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "multiplatform"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "android"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+      # Server framework major versions require adapter code migrations
+      - dependency-name: "org.springframework*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.springframework.boot*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "io.ktor:*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "io.micronaut:*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.hibernate.validator:*"
+        update-types: ["version-update:semver-major"]
 
