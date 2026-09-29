@@ -13,7 +13,7 @@ dependencies {
     compileOnly("org.springframework:spring-web:6.2.19")
     compileOnly("org.springframework:spring-webmvc:6.2.19")
     compileOnly("org.springframework:spring-context:6.2.19")
-    compileOnly("org.springframework.boot:spring-boot-autoconfigure:3.2.4")
+    compileOnly("org.springframework.boot:spring-boot-autoconfigure:3.5.16")
 
     testImplementation(kotlin("test"))
     testImplementation("org.springframework:spring-test:6.2.19")
