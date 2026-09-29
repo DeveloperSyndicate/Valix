@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dokka Vector Brand Assets**: Added native SVG vector asset `images/logo-icon.svg` with proper XML namespaces and `viewBox`.
 - **Dokka Base Custom Assets Configuration**: Configured `customAssets` in `DokkaBase` plugin settings across root and subproject tasks in `build.gradle.kts` for consistent documentation asset packaging during local and CI builds.
 - **Build Performance Optimizations**: Enabled Gradle parallel task execution (`org.gradle.parallel=true`), build caching (`org.gradle.caching=true`), and daemon file system watching (`org.gradle.vfs.watch=true`) in `gradle.properties`.
+- **Maven Central Publishing Optimization**: Reduced publication file count by ~64% by omitting redundant signature checksums (`.asc.md5`, `.asc.sha1`), standardizing on MD5/SHA-1, and retiring legacy relocation modules from active publication.
 
 ### Fixed
 - **Documentation Logo & Favicon**: Resolved empty/broken logo icon in Dokka navigation header and browser tabs by eliminating binary PNG-to-SVG filename copying in `publish.yml`, restoring valid `image/svg+xml` MIME-type rendering on GitHub Pages.
