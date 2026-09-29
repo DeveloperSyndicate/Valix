@@ -44,3 +44,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 /.idea
+
+### Android / Local Config ###
+local.properties
+*.properties.local

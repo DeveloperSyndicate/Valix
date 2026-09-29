@@ -12,7 +12,7 @@ plugins {
 
 allprojects {
     group = "com.developersyndicate.valix"
-    version = "1.0.5"
+    version = "1.0.6"
 }
 
 subprojects {
@@ -58,7 +58,10 @@ subprojects {
         tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
             pluginsMapConfiguration.set(
                 mapOf(
-                    "org.jetbrains.dokka.base.DokkaBase" to """{ "footerMessage": "© 2026 Copyright Developer Syndicate" }"""
+                    "org.jetbrains.dokka.base.DokkaBase" to """{
+                        "customAssets": ["${rootDir}/images/logo-icon.svg"],
+                        "footerMessage": "© 2026 Copyright Developer Syndicate"
+                    }"""
                 )
             )
         }
@@ -101,7 +104,10 @@ subprojects {
 tasks.withType<org.jetbrains.dokka.gradle.DokkaMultiModuleTask>().configureEach {
     pluginsMapConfiguration.set(
         mapOf(
-            "org.jetbrains.dokka.base.DokkaBase" to """{ "footerMessage": "© 2026 Copyright Developer Syndicate" }"""
+            "org.jetbrains.dokka.base.DokkaBase" to """{
+                "customAssets": ["${rootDir}/images/logo-icon.svg"],
+                "footerMessage": "© 2026 Copyright Developer Syndicate"
+            }"""
         )
     )
 }

@@ -88,9 +88,11 @@ jobs:
         run: |
           ./gradlew dokkaHtmlMultiModule --no-configuration-cache
           
-          # Replace Dokka default Kotlin logo with Valix logo
+          # Replace Dokka default Kotlin logo with genuine Valix SVG & PNG logos
+          if [ -f "images/logo-icon.svg" ]; then
+            cp images/logo-icon.svg ./build/dokka/htmlMultiModule/images/logo-icon.svg
+          fi
           if [ -f "images/logo.png" ]; then
-            cp images/logo.png ./build/dokka/htmlMultiModule/images/logo-icon.svg
             cp images/logo.png ./build/dokka/htmlMultiModule/images/logo.png
           fi
           

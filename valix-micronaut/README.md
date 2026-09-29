@@ -7,7 +7,7 @@ This module provides reflection-free validation for Micronaut applications using
 Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
-implementation("com.developersyndicate.valix:valix-micronaut:1.0.3")
+implementation("com.developersyndicate.valix:valix-micronaut:1.0.6")
 ```
 
 ## Usage
