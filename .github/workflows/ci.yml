@@ -34,7 +34,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Detekt Static Analysis
         run: ./gradlew detekt
@@ -68,10 +68,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v5
+        uses: gradle/actions/wrapper-validation@v6
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Compile Kotlin
         run: ./gradlew compileKotlin
@@ -93,7 +93,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Check KMP Targets (iOS, JS, Wasm)
         run: |
@@ -118,7 +118,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Validate Dokka Build
         run: ./gradlew dokkaHtmlMultiModule --no-configuration-cache
