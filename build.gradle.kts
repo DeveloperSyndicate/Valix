@@ -6,7 +6,7 @@ plugins {
     id("com.android.application") version "9.1.1" apply false
     id("com.android.library") version "9.1.1" apply false
     id("org.jetbrains.dokka") version "1.9.20"
-    id("com.vanniktech.maven.publish") version "0.29.0" apply false
+    id("com.vanniktech.maven.publish") version "0.37.0" apply false
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
