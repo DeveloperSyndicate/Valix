@@ -22,7 +22,7 @@
 ```kotlin
 plugins {
     kotlin("multiplatform") version "2.3.21" // Or kotlin("jvm") / kotlin("android")
-    id("com.google.devtools.ksp") version "2.3.12"
+    id("com.google.devtools.ksp") version "2.3.9"
 }
 
 dependencies {

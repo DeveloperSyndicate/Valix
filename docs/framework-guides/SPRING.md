@@ -35,7 +35,7 @@ Add the Spring Boot adapter and the KSP annotation processor to your `build.grad
 
 ```kotlin
 plugins {
-    id("com.google.devtools.ksp") version "2.3.12"
+    id("com.google.devtools.ksp") version "2.3.9"
 }
 
 dependencies {

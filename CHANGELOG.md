@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Updated
 - **Dependency Upgrades**:
-  - `com.google.devtools.ksp` updated to `2.3.12`.
   - `org.jetbrains.kotlinx:kotlinx-serialization-core`, `kotlinx-coroutines-core`, `kotlinx-coroutines-test` updated to `1.11.0`.
   - `io.micronaut:micronaut-inject` and `micronaut-aop` updated to `4.10.32`.
   - `io.ktor:ktor-server-core` and `ktor-server-test-host` updated to `2.3.13`.
