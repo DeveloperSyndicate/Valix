@@ -35,17 +35,17 @@ Add the Micronaut adapter and the KSP annotation processor to your `build.gradle
 
 ```kotlin
 plugins {
-    id("com.google.devtools.ksp") version "2.3.9"
+    id("com.google.devtools.ksp") version "2.3.12"
 }
 
 dependencies {
     // Core runtime and Micronaut adapter dependencies
-    implementation("com.developersyndicate.valix:valix-core:1.0.6")
-    implementation("com.developersyndicate.valix:valix-runtime:1.0.6")
-    implementation("com.developersyndicate.valix:valix-micronaut:1.0.6")
+    implementation("com.developersyndicate.valix:valix-core:1.0.7")
+    implementation("com.developersyndicate.valix:valix-runtime:1.0.7")
+    implementation("com.developersyndicate.valix:valix-micronaut:1.0.7")
     
     // KSP generator
-    ksp("com.developersyndicate.valix:valix-ksp:1.0.6")
+    ksp("com.developersyndicate.valix:valix-ksp:1.0.7")
 }
 ```
 

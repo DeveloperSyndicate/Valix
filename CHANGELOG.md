@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.7] - 2026-11-23
+
+### Fixed
+- **Serialization Opt-In Enforcement**: Added explicit opt-in to `ExperimentalSerializationApi`, `InternalSerializationApi`, and `SealedSerializationApi` on `EnrichedDescriptor` in `valix-serialization`, preventing compilation failures against `kotlinx.serialization` 1.8.0+ and 1.11.0+.
+- **Dokka Metaspace Capacity**: Increased Gradle daemon Metaspace allocation (`org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=2048m`) in `gradle.properties` to ensure reliable full-multimodule Dokka generation.
+- **Dependabot Android Plugin Harmonization**: Grouped `com.android.application` and `com.android.library` under `android-gradle-plugin` to ensure lockstep updates and ignored incompatible major/minor AGP bumps that require higher Gradle versions.
+
+### Updated
+- **Dependency Upgrades**:
+  - `com.google.devtools.ksp` updated to `2.3.12`.
+  - `org.jetbrains.kotlinx:kotlinx-serialization-core`, `kotlinx-coroutines-core`, `kotlinx-coroutines-test` updated to `1.11.0`.
+  - `io.micronaut:micronaut-inject` and `micronaut-aop` updated to `4.10.32`.
+  - `io.ktor:ktor-server-core` and `ktor-server-test-host` updated to `2.3.13`.
+  - `org.hibernate.validator:hibernate-validator` updated to `8.0.6.Final`.
+  - `org.springframework:spring-webmvc` updated to `6.2.19` and `spring-boot-autoconfigure` to `3.5.16`.
+  - `com.squareup:kotlinpoet` and `kotlinpoet-ksp` updated to `2.4.0`.
+  - `me.champeau.jmh` updated to `0.7.3`.
+  - `plugin.compose` updated to `2.4.21`.
+
+---
+
 ## [1.0.6] - 2026-09-29
 
 ### Added
