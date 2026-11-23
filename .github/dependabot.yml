@@ -25,6 +25,9 @@ updates:
       - "dependencies"
       - "gradle"
     groups:
+      android-gradle-plugin:
+        patterns:
+          - "com.android.*"
       test-dependencies:
         patterns:
           - "org.mockito*"
@@ -47,6 +50,12 @@ updates:
       - dependency-name: "multiplatform"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "android"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+      # Android Gradle Plugin updates must be kept in lockstep and require Gradle wrapper upgrades
+      - dependency-name: "com.android.application"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "com.android.library"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
       # Server framework major versions require adapter code migrations
