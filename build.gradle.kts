@@ -12,7 +12,7 @@ plugins {
 
 allprojects {
     group = "com.developersyndicate.valix"
-    version = "1.0.6"
+    version = "1.0.7"
 }
 
 subprojects {

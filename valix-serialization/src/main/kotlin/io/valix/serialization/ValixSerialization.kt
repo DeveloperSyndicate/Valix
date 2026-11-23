@@ -3,6 +3,9 @@ package io.valix.serialization
 import io.valix.metadata.ValixModelMetadata
 import io.valix.metadata.FieldMetadata
 import io.valix.metadata.ConstraintMetadata
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.SealedSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
 
 /**
@@ -81,6 +84,7 @@ private fun escapeJson(str: String): String {
  * @property original Underlying kotlinx.serialization [SerialDescriptor].
  * @property metadata Associated [ValixModelMetadata].
  */
+@OptIn(ExperimentalSerializationApi::class, InternalSerializationApi::class, SealedSerializationApi::class)
 class EnrichedDescriptor(
     val original: SerialDescriptor,
     val metadata: ValixModelMetadata

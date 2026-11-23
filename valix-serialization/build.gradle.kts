@@ -8,7 +8,7 @@ kotlin {
 
 dependencies {
     implementation(project(":valix-core"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.11.0")
     testImplementation(kotlin("test"))
 }
 

@@ -12,7 +12,7 @@ Add dependency to `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.developersyndicate.valix:valix-compose:1.0.6")
+    implementation("com.developersyndicate.valix:valix-compose:1.0.7")
 }
 ```
 
