@@ -10,7 +10,7 @@ dependencies {
     implementation(project(":valix-core"))
     implementation(project(":valix-localization"))
 
-    compileOnly("io.micronaut:micronaut-inject:4.10.32")
+    compileOnly("io.micronaut:micronaut-inject:4.10.37")
     compileOnly("io.micronaut:micronaut-aop:4.10.37")
 
     testImplementation(kotlin("test"))
